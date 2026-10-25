@@ -1,0 +1,190 @@
+# Sightwell fork: builds the combined netbird-server image from this
+# repository and publishes it to the fork's own GitHub Container Registry.
+#
+#   push of a tag v*-sightwell.*  → ghcr.io/minicloud-io/sightwell-netbird-server:<tag>,
+#                                   :latest, :sha-<short>, plus a GitHub release
+#                                   with the corresponding source archive
+#   workflow_dispatch             → build only, unless "push" is ticked
+#
+# The binary is compiled from source with combined/Dockerfile.multistage, once
+# per architecture on a native runner (the build needs cgo, so emulation would
+# be far too slow), and the two images are merged into one manifest list.
+# Upstream's release workflow (goreleaser, NetBird's registries and secrets)
+# is not used and should stay disabled in this fork. See docs/sightwell/README.md.
+name: Sightwell server image
+
+on:
+  push:
+    tags: ["v*-sightwell.*"]
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Push the image to GHCR"
+        type: boolean
+        default: false
+
+concurrency:
+  group: sightwell-server-image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # release assets on tags
+  packages: write # ghcr.io
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+  PUSH: ${{ github.event_name == 'push' || inputs.push == true }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The Dockerfile stamps the binary with `git describe --tags`.
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Platform name for the artifact
+        run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        if: env.PUSH == 'true'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          labels: |
+            org.opencontainers.image.title=Sightwell Connectivity server (NetBird)
+            org.opencontainers.image.description=NetBird combined server built from the Sightwell fork, with themeable embedded IdP pages
+            org.opencontainers.image.vendor=KeyBeyond (Sightwell)
+            org.opencontainers.image.licenses=AGPL-3.0
+
+      - name: Build (and push by digest)
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: combined/Dockerfile.multistage
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=${{ env.PUSH }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+
+      - name: Export digest
+        if: env.PUSH == 'true'
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        if: env.PUSH == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: build
+    if: github.event_name == 'push' || inputs.push == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Download digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: |
+            type=ref,event=tag
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=sha
+
+      - name: Create the multi-arch manifest
+        id: manifest
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "${IMAGE}@sha256:%s " *)
+          first_tag=$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          digest=$(docker buildx imagetools inspect "$first_tag" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Sightwell Connectivity server image"
+            echo
+            echo "Revision \`${GITHUB_SHA}\`, ref \`${GITHUB_REF_NAME}\`"
+            echo
+            echo "Manifest digest (pin this): \`${IMAGE}:${GITHUB_REF_NAME}@${digest}\`"
+            echo
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo
+            docker buildx imagetools inspect "$first_tag"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: GitHub release with the corresponding source
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST: ${{ steps.manifest.outputs.digest }}
+        run: |
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="sightwell-netbird-server-${GITHUB_REF_NAME}/" \
+            -o "dist/sightwell-netbird-server-${GITHUB_REF_NAME}-source.tar.gz" "${GITHUB_SHA}"
+          {
+            echo "Sightwell Connectivity server ${GITHUB_REF_NAME} (commit ${GITHUB_SHA})."
+            echo
+            echo "Image: ${IMAGE}:${GITHUB_REF_NAME}@${DIGEST} (linux/amd64, linux/arm64)."
+            echo
+            echo "Built from this repository with combined/Dockerfile.multistage. The corresponding source (AGPL-3.0 for management/, signal/, relay/, combined/; BSD-3-Clause otherwise) is attached and is this tag."
+          } > release-notes.md
+          gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md dist/*
