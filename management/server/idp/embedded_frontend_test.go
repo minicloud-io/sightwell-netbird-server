@@ -15,6 +15,7 @@ func writeThemeDir(t *testing.T, theme string, templates ...string) string {
 	dir := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "templates"), 0o755))
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "themes", theme), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "static"), 0o755))
 	for _, name := range templates {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "templates", name), []byte("{{ issuer }}"), 0o644))
 	}
@@ -63,6 +64,14 @@ func TestBuildFrontend_MissingTemplate(t *testing.T) {
 	_, err := buildFrontend(&EmbeddedIdPFrontend{Dir: dir})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "templates/logout.html")
+}
+
+func TestBuildFrontend_MissingStaticFolder(t *testing.T) {
+	dir := writeThemeDir(t, "light", requiredFrontendTemplates...)
+	require.NoError(t, os.Remove(filepath.Join(dir, "static")))
+	_, err := buildFrontend(&EmbeddedIdPFrontend{Dir: dir})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no static directory")
 }
 
 func TestBuildFrontend_MissingThemeFolder(t *testing.T) {

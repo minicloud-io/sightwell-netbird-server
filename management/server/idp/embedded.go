@@ -153,9 +153,12 @@ func buildFrontend(f *EmbeddedIdPFrontend) (dex.Frontend, error) {
 			return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q is missing templates/%s: %w", dir, name, err)
 		}
 	}
-	themeDir := filepath.Join(dir, "themes", frontend.Theme)
-	if info, err := os.Stat(themeDir); err != nil || !info.IsDir() {
-		return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q has no themes/%s directory", dir, frontend.Theme)
+	// Dex mounts static/ and themes/<theme>/ as sub-filesystems and refuses to
+	// start without them ("failed to load web static").
+	for _, sub := range []string{"static", filepath.Join("themes", frontend.Theme)} {
+		if info, err := os.Stat(filepath.Join(dir, sub)); err != nil || !info.IsDir() {
+			return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q has no %s directory", dir, filepath.ToSlash(sub))
+		}
 	}
 	frontend.Dir = dir
 	return frontend, nil
