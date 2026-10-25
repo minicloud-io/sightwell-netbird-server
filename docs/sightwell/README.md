@@ -29,6 +29,7 @@ Dex config. This fork adds the missing plumbing, backwards compatible:
 | `combined/cmd/config.go` | `server.auth.theme` YAML block (`dir`, `name`, `displayName`, `logoURL`) mapped into `Frontend`; a relative `dir` resolves against `dataDir` |
 | `combined/cmd/theme_config_test.go` | parsing and mapping tests |
 | `combined/config.yaml.example` | documentation of the block |
+| `management/server/instance/manager.go` (+ `update_sources_test.go`), `combined/cmd/config.go`, `combined/cmd/root.go` | `server.updates.{managementReleasesURL,dashboardReleasesURL}`: GitHub releases API documents the version check reads "latest" from, so a fork compares against its own releases (go-version orders `v0.81.4-sightwell.4` below `.5` and below `v0.81.5`); empty keeps NetBird's sources |
 
 Nothing changes when the block is absent: the embedded NetBird pages are
 served exactly as before.
@@ -60,6 +61,8 @@ manifest digest together:
 
 | Release | Image |
 | --- | --- |
+| `v0.81.4-sightwell.6` (commit `c0571104`, 2026-10-25): `server.updates` release sources for the version check | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.6@sha256:4ab658e5d133f46256d92d916c11347ba09c6a37fbdd588fa4075f8e6f552161` |
+| `v0.81.4-sightwell.5`: tag exists but its tree had a failing unit test; the build was cancelled, no image or release | — |
 | `v0.81.4-sightwell.4` (commit `06d6cc22`, 2026-10-25): theme served from an in-memory snapshot, ConfigMap mounts of any layout work | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.4@sha256:8baf1cce26f7b90dd95e29f068dfa17d35615f49b45a54bcddc31aa834999c09` |
 | `v0.81.4-sightwell.3` (commit `358c7783`, 2026-10-25): validation also requires `robots.txt`; fails on kubelet's `..data` entries, superseded | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.3@sha256:a1a87bc9193564bf9e912755c4a15ae9ccf6fc1f35e6add56ca61827ef97624d` |
 | `v0.81.4-sightwell.2` (commit `16abdec2`, 2026-10-25): validation also requires `static/`, superseded | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.2@sha256:547d03a7c4b958e6b8b4dafeb535f84f7d73fba474b224df033ab13ab1b57842` |
