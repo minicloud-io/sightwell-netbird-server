@@ -59,7 +59,8 @@ manifest digest together:
 
 | Release | Image |
 | --- | --- |
-| `v0.81.4-sightwell.2` (commit `16abdec2`, 2026-10-25): validation also requires `static/` | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.2@sha256:547d03a7c4b958e6b8b4dafeb535f84f7d73fba474b224df033ab13ab1b57842` |
+| `v0.81.4-sightwell.3` (commit `358c7783`, 2026-10-25): validation also requires `robots.txt` | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.3@sha256:a1a87bc9193564bf9e912755c4a15ae9ccf6fc1f35e6add56ca61827ef97624d` |
+| `v0.81.4-sightwell.2` (commit `16abdec2`, 2026-10-25): validation also requires `static/`, superseded | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.2@sha256:547d03a7c4b958e6b8b4dafeb535f84f7d73fba474b224df033ab13ab1b57842` |
 | `v0.81.4-sightwell.1` (commit `b29735b3`, 2026-10-25, run 40175893900), superseded | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.1@sha256:311c0b8e9bae21d24c97cecf37a21d3109cee17f971701ecc934a38a77cc9d33` |
 
 Each release carries the corresponding source archive (AGPL-3.0 for the
