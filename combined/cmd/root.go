@@ -28,6 +28,7 @@ import (
 	agentnetworkpricing "github.com/netbirdio/netbird/management/internals/modules/agentnetwork/pricing"
 	mgmtServer "github.com/netbirdio/netbird/management/internals/server"
 	nbconfig "github.com/netbirdio/netbird/management/internals/server/config"
+	nbinstance "github.com/netbirdio/netbird/management/server/instance"
 	"github.com/netbirdio/netbird/management/server/telemetry"
 	"github.com/netbirdio/netbird/relay/healthcheck"
 	relayServer "github.com/netbirdio/netbird/relay/server"
@@ -518,6 +519,11 @@ func handleTLSConfig(cfg *CombinedConfig) (*tls.Config, bool, error) {
 }
 
 func createManagementServer(cfg *CombinedConfig, mgmtConfig *nbconfig.Config, tlsConfig *tls.Config) (mgmtServer.Server, error) {
+	// Sightwell fork: the version check reads "latest" from the configured
+	// release sources (server.updates) instead of NetBird's.
+	if u := cfg.Server.Updates; u != nil {
+		nbinstance.SetUpdateSources(u.ManagementReleasesURL, u.DashboardReleasesURL)
+	}
 	mgmt := cfg.Management
 
 	// Extract port from listen address

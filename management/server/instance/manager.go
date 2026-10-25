@@ -34,6 +34,48 @@ const (
 	httpTimeout = 5 * time.Second
 )
 
+// UpdateSources are the endpoints the version check reads "latest" from.
+// The defaults are NetBird's; a fork that publishes its own releases points
+// both at GitHub releases API URLs (JSON with tag_name) of its repositories.
+type UpdateSources struct {
+	// ManagementURL serves the latest management version. Plain text when
+	// ManagementPlainText is true (NetBird's pkgs endpoint), otherwise a
+	// GitHub releases API document.
+	ManagementURL       string
+	ManagementPlainText bool
+	// DashboardURL is a GitHub releases API document for the dashboard.
+	DashboardURL string
+}
+
+var (
+	updateSourcesMu sync.RWMutex
+	updateSources   = UpdateSources{
+		ManagementURL:       managementVersionURL,
+		ManagementPlainText: true,
+		DashboardURL:        dashboardReleasesURL,
+	}
+)
+
+// SetUpdateSources overrides where the version check looks for newer
+// releases. Empty strings keep the respective default.
+func SetUpdateSources(managementReleasesURL, dashboardReleasesURL string) {
+	updateSourcesMu.Lock()
+	defer updateSourcesMu.Unlock()
+	if managementReleasesURL != "" {
+		updateSources.ManagementURL = managementReleasesURL
+		updateSources.ManagementPlainText = false
+	}
+	if dashboardReleasesURL != "" {
+		updateSources.DashboardURL = dashboardReleasesURL
+	}
+}
+
+func currentUpdateSources() UpdateSources {
+	updateSourcesMu.RLock()
+	defer updateSourcesMu.RUnlock()
+	return updateSources
+}
+
 // VersionInfo contains version information for NetBird components
 type VersionInfo struct {
 	// CurrentVersion is the running management server version
@@ -310,8 +352,17 @@ func (m *DefaultManager) fetchVersionInfo(ctx context.Context) (*VersionInfo, er
 		CurrentVersion: version.NetbirdVersion(),
 	}
 
-	// Fetch management version from pkgs.netbird.io (plain text)
-	mgmtVersion, err := m.fetchPlainTextVersion(ctx, managementVersionURL)
+	sources := currentUpdateSources()
+
+	// Fetch the latest management version (plain text from pkgs.netbird.io by
+	// default, a GitHub release when a fork configured its own source)
+	var mgmtVersion string
+	var err error
+	if sources.ManagementPlainText {
+		mgmtVersion, err = m.fetchPlainTextVersion(ctx, sources.ManagementURL)
+	} else {
+		mgmtVersion, err = m.fetchGitHubRelease(ctx, sources.ManagementURL)
+	}
 	if err != nil {
 		log.WithContext(ctx).Warnf("failed to fetch management version: %v", err)
 	} else {
@@ -320,7 +371,7 @@ func (m *DefaultManager) fetchVersionInfo(ctx context.Context) (*VersionInfo, er
 	}
 
 	// Fetch dashboard version from GitHub
-	dashVersion, err := m.fetchGitHubRelease(ctx, dashboardReleasesURL)
+	dashVersion, err := m.fetchGitHubRelease(ctx, sources.DashboardURL)
 	if err != nil {
 		log.WithContext(ctx).Warnf("failed to fetch dashboard version from GitHub: %v", err)
 	} else {

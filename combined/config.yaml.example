@@ -77,6 +77,12 @@ server:
   # ============================================================================
 
   # Metrics and updates
+  # Optional: where the version check looks for newer releases ("Update
+  # available" in the dashboard). GitHub releases API URLs; omit to use
+  # NetBird's own sources.
+  # updates:
+  #   managementReleasesURL: "https://api.github.com/repos/minicloud-io/sightwell-netbird-server/releases/latest"
+  #   dashboardReleasesURL: "https://api.github.com/repos/minicloud-io/sightwell-netbird-dashboard/releases/latest"
   disableAnonymousMetrics: false
   disableGeoliteUpdate: false
 

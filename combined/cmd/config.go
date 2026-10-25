@@ -65,6 +65,10 @@ type ServerConfig struct {
 	Relays    RelaysConfig `yaml:"relays"`    // External relay servers (disables local relay)
 	SignalURI string       `yaml:"signalUri"` // External signal server (disables local signal)
 
+	// Updates: where the version check looks for newer releases (optional).
+	// GitHub releases API URLs; empty keeps NetBird's upstream sources.
+	Updates *UpdatesConfig `yaml:"updates,omitempty"`
+
 	// Management settings (simplified mode)
 	DisableAnonymousMetrics bool               `yaml:"disableAnonymousMetrics"`
 	DisableGeoliteUpdate    bool               `yaml:"disableGeoliteUpdate"`
@@ -158,6 +162,12 @@ type AuthConfig struct {
 	// Theme replaces the embedded IdP's sign-in, sign-out, password, device and
 	// error pages with a directory on disk (optional).
 	Theme *AuthThemeConfig `yaml:"theme,omitempty"`
+}
+
+// UpdatesConfig is the server.updates block.
+type UpdatesConfig struct {
+	ManagementReleasesURL string `yaml:"managementReleasesURL"`
+	DashboardReleasesURL  string `yaml:"dashboardReleasesURL"`
 }
 
 // AuthThemeConfig is the auth.theme block: a Dex web directory (templates/,
