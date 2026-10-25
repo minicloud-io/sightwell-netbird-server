@@ -31,11 +31,11 @@ func TestSetUpdateSources_GitHubForBoth(t *testing.T) {
 	})
 
 	SetUpdateSources(srv.URL+"/mgmt", srv.URL+"/dash")
-	m := &DefaultManager{}
+	m := &DefaultManager{httpClient: srv.Client()}
 	info, err := m.fetchVersionInfo(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "v0.81.4-sightwell.9", info.ManagementVersion)
-	assert.Equal(t, "v2.95.0-sightwell.7", info.DashboardVersion)
+	assert.Equal(t, "0.81.4-sightwell.9", info.ManagementVersion, "fetchGitHubRelease strips the leading v, as for upstream")
+	assert.Equal(t, "2.95.0-sightwell.7", info.DashboardVersion)
 }
 
 func TestSetUpdateSources_EmptyKeepsDefaults(t *testing.T) {
