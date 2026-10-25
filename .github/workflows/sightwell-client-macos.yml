@@ -4,6 +4,17 @@
 name: Sightwell client (macOS, unsigned)
 
 on:
+  # Manual runs need this file on the default branch (GitHub rule); until the
+  # fork's main carries it, client branch pushes that touch the client build it.
+  push:
+    branches: ["feat/client-*"]
+    paths:
+      - "client/**"
+      - "release_files/sightwell*"
+      - "release_files/collect-licenses.sh"
+      - ".github/workflows/sightwell-client-macos.yml"
+      - "go.mod"
+      - "go.sum"
   workflow_dispatch:
     inputs:
       version:
