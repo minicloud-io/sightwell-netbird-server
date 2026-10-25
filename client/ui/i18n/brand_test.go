@@ -90,3 +90,46 @@ func TestBrandLinks(t *testing.T) {
 		}
 	}
 }
+
+// brand.json messages replace their key in every shipped locale; the
+// copyright line carries the NetBird BSD-3-Clause notice.
+func TestAllLocaleMessagesApplied(t *testing.T) {
+	require.Contains(t, allLocaleMessages, "settings.about.copyright")
+	assert.Contains(t, allLocaleMessages["settings.about.copyright"], "NetBird GmbH & AUTHORS")
+	assert.Contains(t, allLocaleMessages["settings.about.copyright"], "BSD-3-Clause")
+	b, err := NewBundle(os.DirFS("locales"))
+	require.NoError(t, err)
+	for key, text := range allLocaleMessages {
+		for _, l := range b.Languages() {
+			bundle, err := b.BundleFor(l.Code)
+			require.NoError(t, err)
+			if _, ok := bundle[key]; !ok {
+				continue // untranslated: falls back to English, which is replaced
+			}
+			assert.Equal(t, text, bundle[key], "%s %s not applied", key, l.Code)
+		}
+	}
+}
+
+// The About page's legal row comes from brand.json legalLinks: every entry
+// needs a translated label (settings.about.links.<key>) and an https URL.
+func TestLegalLinks(t *testing.T) {
+	var cfg struct {
+		LegalLinks []struct {
+			Key string `json:"key"`
+			URL string `json:"url"`
+		} `json:"legalLinks"`
+	}
+	require.NoError(t, json.Unmarshal(brandJSON, &cfg))
+	require.NotEmpty(t, cfg.LegalLinks)
+	data, err := os.ReadFile(filepath.Join("locales", "en", commonBundleFile))
+	require.NoError(t, err)
+	var entries map[string]bundleEntry
+	require.NoError(t, json.Unmarshal(data, &entries))
+	for _, l := range cfg.LegalLinks {
+		_, ok := entries["settings.about.links."+l.Key]
+		assert.True(t, ok, "legal link %q has no settings.about.links.%s label", l.Key, l.Key)
+		u, err := url.Parse(l.URL)
+		assert.True(t, err == nil && u.Scheme == "https" && u.Host != "", "legal link %q: %q is not an https URL", l.Key, l.URL)
+	}
+}

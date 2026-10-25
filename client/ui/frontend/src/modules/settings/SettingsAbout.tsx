@@ -58,12 +58,11 @@ export function SettingsAbout() {
         },
     ];
 
-    const LEGAL_LINKS: { label: string; url: string }[] = [
-        { label: t("settings.about.links.imprint"), url: "https://netbird.io/imprint" },
-        { label: t("settings.about.links.privacy"), url: "https://netbird.io/privacy" },
-        { label: t("settings.about.links.cla"), url: "https://netbird.io/cla" },
-        { label: t("settings.about.links.terms"), url: "https://netbird.io/terms" },
-    ];
+    // Sightwell fork: legal row from i18n/brand.json (legalLinks).
+    const LEGAL_LINKS: { label: string; url: string }[] = brand.legalLinks.map(({ key, url }) => ({
+        label: t(`settings.about.links.${key}`),
+        url,
+    }));
 
     return (
         <div

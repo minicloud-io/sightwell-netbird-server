@@ -18,8 +18,9 @@ import (
 //
 // Only keys where "NetBird" names *this app* are listed. Where it names the
 // technology underneath (the NetBird service/daemon, NetBird IP, NetBird
-// Cloud, NetBird servers and support, setup keys, the copyright line) the
-// text stays as it is, so it remains true.
+// Cloud, NetBird servers and support, setup keys) the text stays as it is, so it
+// remains true. The copyright line is replaced through messages with the
+// BSD-3-Clause notice of the NetBird code underneath.
 
 //go:embed brand.json
 var brandJSON []byte
@@ -35,6 +36,8 @@ type brandConfig struct {
 	// SelfHostedMessages replace keys that offer NetBird Cloud, per locale,
 	// when features.netbirdCloud is false.
 	SelfHostedMessages map[string]map[string]string `json:"selfHostedMessages"`
+	// Messages replace a key's text in every locale (language-neutral text).
+	Messages map[string]string `json:"messages"`
 }
 
 var (
@@ -47,6 +50,7 @@ var (
 	brandReplacer *strings.Replacer
 	// selfHostedMessages is nil when NetBird Cloud is offered.
 	selfHostedMessages map[string]map[string]string
+	allLocaleMessages  map[string]string
 )
 
 func init() {
@@ -67,11 +71,18 @@ func init() {
 	if !c.Features.NetBirdCloud {
 		selfHostedMessages = c.SelfHostedMessages
 	}
+	allLocaleMessages = c.Messages
 }
 
 // applySelfHostedMessages replaces, in one locale's bundle, the texts that
 // offer NetBird Cloud when this build is self-hosted only.
+// It also applies brand.json's messages, which replace a key in every locale.
 func applySelfHostedMessages(code LanguageCode, bundle map[string]string) {
+	for key, msg := range allLocaleMessages {
+		if _, ok := bundle[key]; ok {
+			bundle[key] = msg
+		}
+	}
 	for key, byLocale := range selfHostedMessages {
 		if msg, ok := byLocale[string(code)]; ok {
 			bundle[key] = msg

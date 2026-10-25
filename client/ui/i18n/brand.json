@@ -63,6 +63,17 @@
     "documentation": "https://sightwell.ai/connectivity",
     "releases": "https://github.com/minicloud-io/sightwell-netbird-server/releases"
   },
+  "_legalLinksComment": "About page legal row, in order. key picks the label (settings.about.links.<key>, already translated: imprint, privacy, cla, terms). PLACEHOLDER: upstream's netbird.io pages until Sightwell's legal URLs are supplied.",
+  "legalLinks": [
+    { "key": "imprint", "url": "https://netbird.io/imprint" },
+    { "key": "privacy", "url": "https://netbird.io/privacy" },
+    { "key": "cla", "url": "https://netbird.io/cla" },
+    { "key": "terms", "url": "https://netbird.io/terms" }
+  ],
+  "_messagesComment": "Replace a string in every locale (language-neutral text only). settings.about.copyright: the BSD-3-Clause notice of the NetBird code this client is built on, worded as in LICENSE, instead of upstream's \"© NetBird. All Rights Reserved.\".",
+  "messages": {
+    "settings.about.copyright": "© 2022–{year} NetBird GmbH & AUTHORS · BSD-3-Clause"
+  },
   "_selfHostedComment": "Applied only when features.netbirdCloud is false: these keys offer NetBird Cloud upstream. Translations are new (reusing each locale's existing terms) and should get a native-speaker review.",
   "selfHostedMessages": {
     "welcome.management.description": {

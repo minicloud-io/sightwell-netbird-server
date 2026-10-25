@@ -38,6 +38,11 @@ for (const path in bundleModules) {
                 if (text) messages[key] = text;
             }
         }
+        // Sightwell fork: brand.json messages replace a key in every locale.
+        const allLocales: Record<string, string> = brand.messages;
+        for (const key in allLocales) {
+            if (key in messages) messages[key] = allLocales[key];
+        }
         resources[match[1]] = { common: messages };
     }
 }
