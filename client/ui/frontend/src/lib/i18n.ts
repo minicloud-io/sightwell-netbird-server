@@ -31,6 +31,13 @@ for (const path in bundleModules) {
         for (const key in entries) {
             messages[key] = brandMessage(key, entries[key].message);
         }
+        if (!brand.features.netbirdCloud) {
+            const selfHosted: Record<string, Record<string, string>> = brand.selfHostedMessages;
+            for (const key in selfHosted) {
+                const text = selfHosted[key][match[1]];
+                if (text) messages[key] = text;
+            }
+        }
         resources[match[1]] = { common: messages };
     }
 }

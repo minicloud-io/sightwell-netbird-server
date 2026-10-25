@@ -32,6 +32,7 @@ build. Signing, notarisation, the installer and the daemon are phase 2.
 | Primary button | `frontend/src/components/buttons/Button.tsx` | ink text on orange (7.6:1); white was 2.9:1 |
 | Logos | `frontend/src/assets/logos/sightwell*.svg`, `MainConnectionStatusSwitch.tsx`, `SettingsAbout.tsx`, `SettingsAccent.tsx` | Sightwell lockup on the main and About screens; the accent effect traces the mark. The "NetBird Cloud" option keeps the bird, because it names NetBird's service |
 | Welcome screenshot (macOS) | `frontend/src/assets/img/tray-darwin.png` | menu-bar icon and the "Open …" / "Quit …" rows replaced on the original screenshot, matched to SF 13 pt at weight 550 |
+| Self-hosted only | `i18n/brand.json` (`features.netbirdCloud: false`, `selfHostedMessages`), `frontend/src/hooks/useManagementUrl.ts` (`CLOUD_MANAGEMENT_ENABLED`, `defaultManagementMode`), `ManagementServerSwitch.tsx`, `WelcomeStepManagement.tsx`, `ProfileCreationModal.tsx` | the Cloud / Self-hosted switch is gone from the welcome step, Settings › General and the new-profile dialog; every form starts self-hosted and asks for the server address. A configured NetBird Cloud URL is still shown truthfully in Settings. The three help texts that offered Cloud get new wording in all 13 locales (new translations, reusing each locale's terms; worth a native-speaker review). Set `netbirdCloud` to `true` to restore upstream's behaviour and texts |
 | Update sources | `version/update.go`, `version/url.go`, `version/url_darwin.go` | latest version from `…/releases/latest/download/version` of this fork; download links to the fork's releases page until signed packages exist |
 | Release asset | `.github/workflows/sightwell-server-image.yml` | each release gets a plain-text `version` file for the check above |
 
@@ -45,10 +46,10 @@ build. Signing, notarisation, the installer and the daemon are phase 2.
   NetBird's daemon underneath, users can therefore still be offered NetBird
   updates. Phase 2 ships the daemon from this fork and points the updater at
   this fork's artifacts and signing keys.
-- **Welcome flow defaults to NetBird Cloud.** The first-run choice between
-  NetBird Cloud and self-hosted is unchanged. A Sightwell build should
-  probably preset the customer's management URL and hide the cloud option;
-  that is a behaviour change, not branding, and is left for a decision.
+- **Self-hosted only, but not preset.** NetBird Cloud is not offered (see
+  below), so first run asks for the management server address. Presetting a
+  customer's address in the installer is phase 2. The daemon's own default
+  is still NetBird Cloud; the UI does not prefill it.
 - **Windows and Linux** get the new tray and app icons automatically (shared
   PNGs), but their welcome screenshots (`tray-windows.png`, `tray-linux.png`)
   still show NetBird, and their packaging is untouched.

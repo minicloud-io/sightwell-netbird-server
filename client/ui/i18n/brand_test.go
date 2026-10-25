@@ -52,3 +52,23 @@ func TestBrandingAppliesToAllLocales(t *testing.T) {
 		assert.Contains(t, bundle["peers.details.netbirdIp"], "NetBird", "%s: technology names must stay", l.Code)
 	}
 }
+
+// Self-hosted only: every shipped locale has every replacement text, and the
+// replaced messages no longer offer NetBird Cloud.
+func TestSelfHostedMessagesCoverEveryLocale(t *testing.T) {
+	if selfHostedMessages == nil {
+		t.Skip("NetBird Cloud is enabled in brand.json")
+	}
+	b, err := NewBundle(os.DirFS("locales"))
+	require.NoError(t, err)
+	for key, byLocale := range selfHostedMessages {
+		for _, l := range b.Languages() {
+			text, ok := byLocale[string(l.Code)]
+			require.True(t, ok, "%s has no %s text", key, l.Code)
+			assert.NotContains(t, text, "Cloud", "%s %s", key, l.Code)
+			bundle, err := b.BundleFor(l.Code)
+			require.NoError(t, err)
+			assert.Equal(t, text, bundle[key], "%s %s not applied", key, l.Code)
+		}
+	}
+}

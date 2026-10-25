@@ -2,8 +2,19 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "@/contexts/SettingsContext.tsx";
 import { useConfirm } from "@/contexts/DialogContext.tsx";
+import brand from "../../../i18n/brand.json";
 
 export const CLOUD_MANAGEMENT_URL = "https://api.netbird.io:443";
+
+// Sightwell fork: whether NetBird Cloud is offered as a management server
+// (i18n/brand.json, features.netbirdCloud). When false the client is
+// self-hosted only: no Cloud option, and self-hosted is the default mode.
+export const CLOUD_MANAGEMENT_ENABLED: boolean = brand.features.netbirdCloud;
+
+/** The mode a fresh form starts in. */
+export function defaultManagementMode(): ManagementMode {
+    return CLOUD_MANAGEMENT_ENABLED ? ManagementMode.Cloud : ManagementMode.SelfHosted;
+}
 const CLOUD_MANAGEMENT_URLS = new Set([
     CLOUD_MANAGEMENT_URL,
     "https://api.wiretrustee.com:443", // legacy cloud endpoint
@@ -64,6 +75,7 @@ export enum ManagementMode {
 }
 
 function modeFromUrl(url: string): ManagementMode {
+    if (!CLOUD_MANAGEMENT_ENABLED) return ManagementMode.SelfHosted;
     return isNetbirdCloud(url) ? ManagementMode.Cloud : ManagementMode.SelfHosted;
 }
 
@@ -73,14 +85,16 @@ export function useManagementUrl() {
     const { config, saveField } = useSettings();
     const [modeState, setModeState] = useState<ManagementMode>(modeFromUrl(config.managementUrl));
     const [url, setUrl] = useState(
-        isNetbirdCloud(config.managementUrl) ? "" : config.managementUrl,
+        CLOUD_MANAGEMENT_ENABLED && isNetbirdCloud(config.managementUrl)
+            ? ""
+            : config.managementUrl,
     );
     const [checking, setChecking] = useState(false);
     const [unreachable, setUnreachable] = useState(false);
 
     useEffect(() => {
         setModeState(modeFromUrl(config.managementUrl));
-        if (!isNetbirdCloud(config.managementUrl)) {
+        if (!CLOUD_MANAGEMENT_ENABLED || !isNetbirdCloud(config.managementUrl)) {
             setUrl(config.managementUrl);
         }
     }, [config.managementUrl]);

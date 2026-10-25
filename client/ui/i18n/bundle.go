@@ -192,5 +192,6 @@ func loadBundle(localesFS fs.FS, code LanguageCode) (map[string]string, error) {
 	for k, e := range entries {
 		bundle[k] = brandMessage(k, e.Message) // Sightwell fork: see brand.go
 	}
+	applySelfHostedMessages(code, bundle) // Sightwell fork: see brand.go
 	return bundle, nil
 }

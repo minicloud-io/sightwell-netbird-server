@@ -53,5 +53,53 @@
     "welcome.title",
     "welcome.titleMac",
     "window.title.welcome"
-  ]
+  ],
+  "features": {
+    "netbirdCloud": false
+  },
+  "_selfHostedComment": "Applied only when features.netbirdCloud is false: these keys offer NetBird Cloud upstream. Translations are new (reusing each locale's existing terms) and should get a native-speaker review.",
+  "selfHostedMessages": {
+    "welcome.management.description": {
+      "en": "Enter the address of the management server your administrator gave you.",
+      "de": "Geben Sie die Adresse des Management-Servers ein, die Sie von Ihrem Administrator erhalten haben.",
+      "es": "Introduzca la dirección del servidor de gestión que le facilitó su administrador.",
+      "fr": "Saisissez l’adresse du serveur de gestion fournie par votre administrateur.",
+      "gl": "Introduza o enderezo do servidor de xestión que lle facilitou o seu administrador.",
+      "hu": "Adja meg a felügyeleti szerver címét, amelyet a rendszergazdától kapott.",
+      "it": "Inserisca l’indirizzo del server di gestione fornito dal suo amministratore.",
+      "ja": "管理者から受け取った管理サーバーのアドレスを入力してください。",
+      "pt": "Insira o endereço do servidor de gerenciamento fornecido pelo seu administrador.",
+      "ru": "Введите адрес сервера управления, полученный от администратора.",
+      "uk": "Введіть адресу сервера керування, отриману від адміністратора.",
+      "zh-CN": "请输入管理员提供的管理服务器地址。"
+    },
+    "settings.general.management.help": {
+      "en": "The management server this client connects to. Changes will reconnect the client.",
+      "de": "Der Management-Server, mit dem sich dieser Client verbindet. Änderungen lösen eine Neuverbindung des Clients aus.",
+      "es": "El servidor de gestión al que se conecta este cliente. Los cambios reconectarán el cliente.",
+      "fr": "Le serveur de gestion auquel ce client se connecte. Les modifications reconnecteront le client.",
+      "gl": "O servidor de xestión ao que se conecta este cliente. Os cambios volverán conectar o cliente.",
+      "hu": "A felügyeleti szerver, amelyhez ez a kliens csatlakozik. A módosítások újracsatlakozást váltanak ki.",
+      "it": "Il server di gestione a cui si connette questo client. Le modifiche riconnettono il client.",
+      "ja": "このクライアントが接続する管理サーバーです。変更するとクライアントが再接続します。",
+      "pt": "O servidor de gerenciamento ao qual este cliente se conecta. As alterações reconectarão o cliente.",
+      "ru": "Сервер управления, к которому подключается этот клиент. Изменения вызовут переподключение клиента.",
+      "uk": "Сервер керування, до якого підключається цей клієнт. Зміни призведуть до перепідключення клієнта.",
+      "zh-CN": "此客户端连接的管理服务器。更改将使客户端重新连接。"
+    },
+    "profile.dialog.managementHelp": {
+      "en": "The management server for this profile.",
+      "de": "Der Management-Server für dieses Profil.",
+      "es": "El servidor de gestión de este perfil.",
+      "fr": "Le serveur de gestion de ce profil.",
+      "gl": "O servidor de xestión deste perfil.",
+      "hu": "A profilhoz tartozó felügyeleti szerver.",
+      "it": "Il server di gestione di questo profilo.",
+      "ja": "このプロファイルの管理サーバーです。",
+      "pt": "O servidor de gerenciamento deste perfil.",
+      "ru": "Сервер управления для этого профиля.",
+      "uk": "Сервер керування для цього профілю.",
+      "zh-CN": "此配置文件的管理服务器。"
+    }
+  }
 }

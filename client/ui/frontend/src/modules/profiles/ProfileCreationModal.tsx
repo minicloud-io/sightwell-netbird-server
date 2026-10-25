@@ -9,6 +9,7 @@ import { HelpText } from "@/components/typography/HelpText";
 import { ManagementServerSwitch } from "@/components/ManagementServerSwitch";
 import {
     CLOUD_MANAGEMENT_URL,
+    defaultManagementMode,
     ManagementMode,
     checkManagementUrlReachable,
     isValidManagementUrl,
@@ -38,7 +39,7 @@ export const ProfileCreationModal = ({ open, onOpenChange, onSubmit, initial }: 
     const urlId = useId();
     const isEdit = !!initial;
     const initialModeFromUrl = (u: string): ManagementMode =>
-        u && u !== CLOUD_MANAGEMENT_URL ? ManagementMode.SelfHosted : ManagementMode.Cloud;
+        u && u !== CLOUD_MANAGEMENT_URL ? ManagementMode.SelfHosted : defaultManagementMode();
     const initialSelfHostedUrl = (u: string): string => (u && u !== CLOUD_MANAGEMENT_URL ? u : "");
 
     const [name, setName] = useState(initial?.name ?? "");
@@ -46,7 +47,7 @@ export const ProfileCreationModal = ({ open, onOpenChange, onSubmit, initial }: 
     const nameRef = useRef<HTMLInputElement>(null);
 
     const [mode, setMode] = useState<ManagementMode>(
-        initial ? initialModeFromUrl(initial.managementUrl) : ManagementMode.Cloud,
+        initial ? initialModeFromUrl(initial.managementUrl) : defaultManagementMode(),
     );
     const [url, setUrl] = useState(initial ? initialSelfHostedUrl(initial.managementUrl) : "");
     const [urlError, setUrlError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export const ProfileCreationModal = ({ open, onOpenChange, onSubmit, initial }: 
     useEffect(() => {
         if (open) {
             setName(initial?.name ?? "");
-            setMode(initial ? initialModeFromUrl(initial.managementUrl) : ManagementMode.Cloud);
+            setMode(initial ? initialModeFromUrl(initial.managementUrl) : defaultManagementMode());
             setUrl(initial ? initialSelfHostedUrl(initial.managementUrl) : "");
             setNameError(null);
             setUrlError(null);
@@ -67,7 +68,7 @@ export const ProfileCreationModal = ({ open, onOpenChange, onSubmit, initial }: 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, initial?.name, initial?.managementUrl]);
 
-    const initialModeRef = useRef<ManagementMode>(ManagementMode.Cloud);
+    const initialModeRef = useRef<ManagementMode>(defaultManagementMode());
     useEffect(() => {
         if (!open) return;
         initialModeRef.current = mode;

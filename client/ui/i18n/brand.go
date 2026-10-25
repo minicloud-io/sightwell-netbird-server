@@ -29,6 +29,12 @@ type brandConfig struct {
 	ProductName string      `json:"productName"`
 	Replace     [][2]string `json:"replace"`
 	Keys        []string    `json:"keys"`
+	Features    struct {
+		NetBirdCloud bool `json:"netbirdCloud"`
+	} `json:"features"`
+	// SelfHostedMessages replace keys that offer NetBird Cloud, per locale,
+	// when features.netbirdCloud is false.
+	SelfHostedMessages map[string]map[string]string `json:"selfHostedMessages"`
 }
 
 var (
@@ -39,6 +45,8 @@ var (
 
 	brandedKeys   map[string]bool
 	brandReplacer *strings.Replacer
+	// selfHostedMessages is nil when NetBird Cloud is offered.
+	selfHostedMessages map[string]map[string]string
 )
 
 func init() {
@@ -56,6 +64,19 @@ func init() {
 		pairs = append(pairs, r[0], r[1])
 	}
 	brandReplacer = strings.NewReplacer(pairs...)
+	if !c.Features.NetBirdCloud {
+		selfHostedMessages = c.SelfHostedMessages
+	}
+}
+
+// applySelfHostedMessages replaces, in one locale's bundle, the texts that
+// offer NetBird Cloud when this build is self-hosted only.
+func applySelfHostedMessages(code LanguageCode, bundle map[string]string) {
+	for key, byLocale := range selfHostedMessages {
+		if msg, ok := byLocale[string(code)]; ok {
+			bundle[key] = msg
+		}
+	}
 }
 
 // brandMessage applies the product name to one bundle entry.

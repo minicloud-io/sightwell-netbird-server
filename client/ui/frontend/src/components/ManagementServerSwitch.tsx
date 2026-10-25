@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import netbirdLogo from "@/assets/logos/netbird.svg";
 import { SwitchItem } from "@/components/switches/SwitchItem";
 import { SwitchItemGroup } from "@/components/switches/SwitchItemGroup";
-import { ManagementMode } from "@/hooks/useManagementUrl.ts";
+import { CLOUD_MANAGEMENT_ENABLED, ManagementMode } from "@/hooks/useManagementUrl.ts";
 
 type Props = {
     value: ManagementMode;
@@ -12,6 +12,8 @@ type Props = {
 
 export const ManagementServerSwitch = ({ value, onChange, fullWidth = false }: Props) => {
     const { t, i18n } = useTranslation();
+    // Sightwell fork: self-hosted only, so there is nothing to switch between.
+    if (!CLOUD_MANAGEMENT_ENABLED) return null;
     const itemClass = fullWidth ? "flex-1" : undefined;
     return (
         <SwitchItemGroup

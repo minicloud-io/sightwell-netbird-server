@@ -8,6 +8,7 @@ import { Input } from "@/components/inputs/Input";
 import { ManagementServerSwitch } from "@/components/ManagementServerSwitch";
 import {
     CLOUD_MANAGEMENT_URL,
+    CLOUD_MANAGEMENT_ENABLED,
     ManagementMode,
     checkManagementUrlReachable,
     isNetbirdCloud,
@@ -27,11 +28,13 @@ export function WelcomeStepManagement({
     onContinue,
 }: Readonly<WelcomeStepManagementProps>) {
     const { t } = useTranslation();
-    const startsCloud = isNetbirdCloud(initialUrl);
+    // Sightwell fork: without Cloud the form always starts self-hosted, and a
+    // daemon default pointing at NetBird Cloud is not prefilled.
+    const startsCloud = CLOUD_MANAGEMENT_ENABLED && isNetbirdCloud(initialUrl);
     const [mode, setMode] = useState<ManagementMode>(
         startsCloud ? ManagementMode.Cloud : ManagementMode.SelfHosted,
     );
-    const [url, setUrl] = useState(startsCloud ? "" : initialUrl);
+    const [url, setUrl] = useState(isNetbirdCloud(initialUrl) ? "" : initialUrl);
     const [syntaxError, setSyntaxError] = useState<string | null>(null);
     const [unreachable, setUnreachable] = useState(false);
     const [checking, setChecking] = useState(false);
