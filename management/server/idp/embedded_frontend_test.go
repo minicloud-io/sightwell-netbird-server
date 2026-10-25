@@ -16,6 +16,7 @@ func writeThemeDir(t *testing.T, theme string, templates ...string) string {
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "templates"), 0o755))
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "themes", theme), 0o755))
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "static"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "robots.txt"), []byte("User-agent: *\nDisallow: /\n"), 0o644))
 	for _, name := range templates {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "templates", name), []byte("{{ issuer }}"), 0o644))
 	}
@@ -72,6 +73,20 @@ func TestBuildFrontend_MissingStaticFolder(t *testing.T) {
 	_, err := buildFrontend(&EmbeddedIdPFrontend{Dir: dir})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no static directory")
+}
+
+func TestBuildFrontend_RobotsTxtMissingOrDirectory(t *testing.T) {
+	dir := writeThemeDir(t, "light", requiredFrontendTemplates...)
+	require.NoError(t, os.Remove(filepath.Join(dir, "robots.txt")))
+	_, err := buildFrontend(&EmbeddedIdPFrontend{Dir: dir})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "robots.txt")
+
+	// A Kubernetes file mount that lands on a directory must be reported too.
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "robots.txt"), 0o755))
+	_, err = buildFrontend(&EmbeddedIdPFrontend{Dir: dir})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "directory mounted")
 }
 
 func TestBuildFrontend_MissingThemeFolder(t *testing.T) {

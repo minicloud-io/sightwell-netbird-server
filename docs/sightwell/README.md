@@ -23,7 +23,7 @@ Dex config. This fork adds the missing plumbing, backwards compatible:
 
 | File | Change |
 | --- | --- |
-| `management/server/idp/embedded.go` | `EmbeddedIdPConfig.Frontend *EmbeddedIdPFrontend` (`Dir`, `Theme`, `DisplayName`, `LogoURL`); `buildFrontend` maps it to `dex.Frontend` and validates a custom `Dir` at start-up (must exist and contain `templates/header.html`, `footer.html`, `login.html`, `logout.html`, `password.html`, `error.html`, plus the `static/` and `themes/<Theme>/` directories Dex mounts), so a broken theme fails on boot with a clear message rather than on the first sign-in |
+| `management/server/idp/embedded.go` | `EmbeddedIdPConfig.Frontend *EmbeddedIdPFrontend` (`Dir`, `Theme`, `DisplayName`, `LogoURL`); `buildFrontend` maps it to `dex.Frontend` and validates a custom `Dir` at start-up (must exist and contain `templates/header.html`, `footer.html`, `login.html`, `logout.html`, `password.html`, `error.html`, plus the `static/` and `themes/<Theme>/` directories and the `robots.txt` file Dex loads at start), so a broken theme or mount fails on boot with a clear message rather than on the first sign-in |
 | `management/server/idp/embedded_frontend_test.go` | tests for defaults, mapping and each validation error |
 | `combined/cmd/config.go` | `server.auth.theme` YAML block (`dir`, `name`, `displayName`, `logoURL`) mapped into `Frontend`; a relative `dir` resolves against `dataDir` |
 | `combined/cmd/theme_config_test.go` | parsing and mapping tests |
