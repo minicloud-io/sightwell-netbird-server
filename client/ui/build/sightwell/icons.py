@@ -10,11 +10,14 @@ build tasks stay unchanged):
 
   client/ui/assets/sightwell-menubar-connected.png, -update-connected.png
       (macOS, full colour, used instead of the template icon while connected)
+  client/ui/assets/sightwell-menubar-connecting-NN.png
+      (macOS, full colour spinner frames shown while connecting, the
+      dashboard's BrandSpinner: the mark inside a track with a turning arc)
 
 The status dots (netbird-menu-dot-*) are status colours, not brand, and stay.
 
 State language follows upstream: the mark with a cut-out badge in the corner.
-connected = check, connecting = three dots, error / needs-login = cross,
+connected = check, connecting = three dots (macOS: the spinner instead), error / needs-login = cross,
 update = up arrow (plus check when connected), disconnected = no badge.
 
 Run from the repository root:  python3 client/ui/build/sightwell/icons.py
@@ -196,6 +199,44 @@ def save_menubar_colour():
     return out
 
 
+SPINNER_FRAMES = 12
+SPINNER_SIZE = 176
+
+
+def menubar_spinner(size, step, steps=SPINNER_FRAMES):
+    """One frame of the macOS connecting spinner (colour, like the connected
+    icon): the mark with its paper rim at 0.66 scale, a neutral track at the
+    edge, and a 270 degree signal-orange arc rotated by step/steps of a turn."""
+    S = size * SS
+    u = S / 120.0
+    c = S / 2
+    img = Image.new("RGBA", (S, S), CLEAR)
+    d = ImageDraw.Draw(img)
+    r, w = 53 * u, 10 * u
+    box = (c - r, c - r, c + r, c + r)
+    # Track: mid grey at partial alpha reads on light and dark menu bars.
+    d.arc(box, 0, 360, fill=(0x8C, 0x91, 0x97, 110), width=int(w))
+    start = -90 + 360.0 * step / steps
+    end = start + 270
+    d.arc(box, start, end, fill=ORANGE, width=int(w))
+    for a in (start, end):  # round caps
+        t = math.radians(a)
+        circle(d, c + (r - w / 2) * math.cos(t), c + (r - w / 2) * math.sin(t), w / 2, ORANGE)
+    scale = 0.66
+    circle(d, c, c, (56 * scale + 5) * u, PAPER)
+    img.alpha_composite(mark(size, INK, WHITE, ORANGE, scale=scale))
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def save_menubar_spinner():
+    out = []
+    for i in range(SPINNER_FRAMES):
+        name = f"sightwell-menubar-connecting-{i:02d}.png"
+        menubar_spinner(SPINNER_SIZE, i).save(os.path.join(ASSETS, name), optimize=True)
+        out.append(name)
+    return out
+
+
 def save_menu_icons():
     out = []
     # Menu rows are shown on light and dark menus: neutral ring, open glass, orange horizon.
@@ -225,6 +266,6 @@ def save_appicon():
 
 
 if __name__ == "__main__":
-    done = save_tray() + save_menubar_colour() + save_menu_icons() + save_appicon()
+    done = save_tray() + save_menubar_colour() + save_menubar_spinner() + save_menu_icons() + save_appicon()
     print(f"wrote {len(done)} icons")
     sys.exit(0)

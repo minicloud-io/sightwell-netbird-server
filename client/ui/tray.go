@@ -89,6 +89,9 @@ type Tray struct {
 
 	updater *trayUpdater
 
+	// spinner animates the macOS connecting icon (Sightwell fork).
+	spinner menubarSpinner
+
 	// statusMu guards the daemon-status core mirrored on the tray. One mutex
 	// covers these fields because applyStatus writes them together on every
 	// Status push and the menu painters read them.

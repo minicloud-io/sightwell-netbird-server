@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"runtime"
 	"strings"
 
@@ -26,7 +27,13 @@ func (t *Tray) applyIcon() {
 
 	icon, dark := t.iconForState()
 	if runtime.GOOS == "darwin" {
-		// Sightwell fork: full colour while connected, template otherwise.
+		// Sightwell fork: a turning spinner while connecting, full colour
+		// while connected, template otherwise.
+		if bytes.Equal(icon, iconConnectingMacOS) {
+			t.spinner.start(func(frame []byte) { t.tray.SetIcon(frame) })
+			return
+		}
+		t.spinner.stop()
 		if colour := macOSColourIcon(icon); colour != nil {
 			t.tray.SetIcon(colour)
 			return
