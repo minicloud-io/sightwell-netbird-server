@@ -8,6 +8,9 @@ build tasks stay unchanged):
   client/ui/assets/netbird-menu-16.png, -24.png, netbird-menu-about-18.png, netbird.png
   client/ui/build/appicon.png  (1024 px; wails3 derives icons.icns and icon.ico)
 
+  client/ui/assets/sightwell-menubar-connected.png, -update-connected.png
+      (macOS, full colour, used instead of the template icon while connected)
+
 The status dots (netbird-menu-dot-*) are status colours, not brand, and stay.
 
 State language follows upstream: the mark with a cut-out badge in the corner.
@@ -169,6 +172,30 @@ def save_tray():
     return out
 
 
+def menubar_colour(size, update=False):
+    """Full-colour macOS menu-bar icon for the connected states (no badge).
+    A colour image is not adapted by macOS like a template, so it carries a
+    hairline paper rim to stay readable on dark and tinted menu bars."""
+    S = size * SS
+    img = Image.new("RGBA", (S, S), CLEAR)
+    circle(ImageDraw.Draw(img), S / 2, S / 2, 56 * S / 120 + 7 * SS, PAPER)
+    img.alpha_composite(mark(size, INK, WHITE, ORANGE))
+    if update:
+        r = S * 0.19
+        bx, by = S * 0.79, S * 0.21
+        knock(img, bx, by, r * 1.32)
+        glyph(img, "arrow", bx, by, r, ORANGE)
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def save_menubar_colour():
+    out = []
+    for name, update in [("sightwell-menubar-connected.png", False), ("sightwell-menubar-update-connected.png", True)]:
+        menubar_colour(366, update).save(os.path.join(ASSETS, name), optimize=True)
+        out.append(name)
+    return out
+
+
 def save_menu_icons():
     out = []
     # Menu rows are shown on light and dark menus: neutral ring, open glass, orange horizon.
@@ -198,6 +225,6 @@ def save_appicon():
 
 
 if __name__ == "__main__":
-    done = save_tray() + save_menu_icons() + save_appicon()
+    done = save_tray() + save_menubar_colour() + save_menu_icons() + save_appicon()
     print(f"wrote {len(done)} icons")
     sys.exit(0)

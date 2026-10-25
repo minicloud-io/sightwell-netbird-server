@@ -26,6 +26,11 @@ func (t *Tray) applyIcon() {
 
 	icon, dark := t.iconForState()
 	if runtime.GOOS == "darwin" {
+		// Sightwell fork: full colour while connected, template otherwise.
+		if colour := macOSColourIcon(icon); colour != nil {
+			t.tray.SetIcon(colour)
+			return
+		}
 		t.tray.SetTemplateIcon(icon)
 		return
 	}
