@@ -1,0 +1,57 @@
+{
+  "_comment": "Sightwell fork: product-name branding applied by the Go bundle (i18n/brand.go) and the React loader (frontend/src/lib/i18n.ts). Only keys where 'NetBird' names this app are listed; technology names stay.",
+  "appName": "Sightwell",
+  "productName": "Sightwell Connectivity",
+  "replace": [
+    [
+      "NetBird Client",
+      "Sightwell Connectivity"
+    ],
+    [
+      "NetBird UI",
+      "Sightwell"
+    ],
+    [
+      "NetBird",
+      "Sightwell"
+    ]
+  ],
+  "keys": [
+    "common.netbird",
+    "connect.toggle.label",
+    "notConnected.description",
+    "notify.mdm.policyApplied.body",
+    "notify.mdm.policyApplied.title",
+    "notify.sessionExpired.body",
+    "notify.sessionExpired.title",
+    "notify.sessionWarning.body",
+    "notify.sessionWarning.bodyGeneric",
+    "notify.sessionWarning.failed",
+    "notify.sessionWarning.successTitle",
+    "notify.update.body",
+    "notify.update.title",
+    "settings.about.client",
+    "settings.about.clientName",
+    "settings.general.autostart.help",
+    "settings.general.autostart.label",
+    "settings.general.keepConnectedOnQuit.help",
+    "settings.general.language.help",
+    "settings.profiles.intro",
+    "settings.troubleshooting.progress.description",
+    "settings.troubleshooting.stage.reconnecting",
+    "tray.menu.open",
+    "tray.menu.quit",
+    "tray.tooltip",
+    "update.banner.message",
+    "update.card.autoCheckInterval",
+    "update.overlay.description",
+    "update.overlay.updating",
+    "update.overlay.updatingVersion",
+    "welcome.description",
+    "welcome.descriptionMac",
+    "welcome.management.title",
+    "welcome.title",
+    "welcome.titleMac",
+    "window.title.welcome"
+  ]
+}

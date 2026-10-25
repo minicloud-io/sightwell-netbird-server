@@ -4,6 +4,8 @@ import { Events } from "@wailsio/runtime";
 
 import { Preferences, I18n } from "@bindings/services";
 import { type LanguageCode } from "@bindings/i18n/models.js";
+// Sightwell fork: shared product-name branding (see i18n/brand.go).
+import brand from "../../../i18n/brand.json";
 
 // Relative path on purpose — alias globs (`@/…`) silently match nothing in some Vite dev setups.
 type BundleEntry = { message: string; description?: string };
@@ -12,6 +14,14 @@ const bundleModules = import.meta.glob<Record<string, BundleEntry>>(
     { eager: true, import: "default" },
 );
 
+// Sightwell fork: product-name branding, shared with the Go bundle
+// (i18n/brand.json, applied in i18n/brand.go). Locale files stay upstream's.
+const brandedKeys = new Set<string>(brand.keys);
+function brandMessage(key: string, message: string): string {
+    if (!brandedKeys.has(key)) return message;
+    return brand.replace.reduce((text, [from, to]) => text.split(from).join(to), message);
+}
+
 const resources: Record<string, { common: Record<string, string> }> = {};
 for (const path in bundleModules) {
     const match = /locales\/([^/]+)\/common\.json$/.exec(path);
@@ -19,7 +29,7 @@ for (const path in bundleModules) {
         const entries = bundleModules[path];
         const messages: Record<string, string> = {};
         for (const key in entries) {
-            messages[key] = entries[key].message;
+            messages[key] = brandMessage(key, entries[key].message);
         }
         resources[match[1]] = { common: messages };
     }

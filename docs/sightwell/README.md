@@ -51,6 +51,12 @@ The Sightwell theme itself lives in the dashboard repository,
 Kubernetes mounting instructions in its README. The directory replaces Dex's
 web directory entirely, so it must carry every template.
 
+## Desktop client
+
+Branch `feat/client-branding` rebrands the macOS desktop UI as Sightwell
+(icons, palette, strings in all locales, bundle identity, update sources).
+Phase 1, unsigned local builds; see `docs/sightwell/CLIENT.md`.
+
 ## Images
 
 Built by `.github/workflows/sightwell-server-image.yml` on tags

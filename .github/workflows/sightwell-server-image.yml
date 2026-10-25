@@ -180,6 +180,8 @@ jobs:
           mkdir -p dist
           git archive --format=tar.gz --prefix="sightwell-netbird-server-${GITHUB_REF_NAME}/" \
             -o "dist/sightwell-netbird-server-${GITHUB_REF_NAME}-source.tar.gz" "${GITHUB_SHA}"
+          # Plain-text latest version for version/update.go (releases/latest/download/version).
+          printf '%s\n' "${GITHUB_REF_NAME#v}" > dist/version
           {
             echo "Sightwell Connectivity server ${GITHUB_REF_NAME} (commit ${GITHUB_SHA})."
             echo

@@ -2,8 +2,9 @@ import type { ComponentType, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@wailsio/runtime";
 import { BookOpen, MessageSquareText, MessagesSquare } from "lucide-react";
-import netbirdFull from "@/assets/logos/netbird-full.svg";
-import netbirdFullLight from "@/assets/logos/netbird-full-light.svg";
+// Sightwell fork: product lockup.
+import netbirdFull from "@/assets/logos/sightwell-full.svg";
+import netbirdFullLight from "@/assets/logos/sightwell-full-light.svg";
 
 // Brand glyphs from simpleicons.org (lucide deprecated its brand icons).
 const GithubIcon = (props: SVGProps<SVGSVGElement>) => (

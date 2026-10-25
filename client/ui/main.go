@@ -279,8 +279,10 @@ func newApplication(onSecondInstance func()) *application.App {
 		// installer pre-populates with the toast activator CLSID; otherwise
 		// toasts show under a different identity and the MSI's CustomActivator
 		// value is orphaned.
-		Name:        "NetBird",
-		Description: "NetBird desktop client",
+		// Sightwell fork: product name; UniqueID below stays NetBird's on
+		// purpose, so this UI and a NetBird UI never drive one daemon at once.
+		Name:        i18n.AppName,
+		Description: i18n.ProductName + " desktop client (built on NetBird)",
 		Icon:        appIcon,
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -360,7 +362,7 @@ func newMainWindow(app *application.App, prefStore *preferences.Store, wm *servi
 	appearance := services.CurrentAppearance()
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:   "main",
-		Title:  "NetBird",
+		Title:  i18n.AppName,
 		Width:  initialWidth,
 		Height: services.WindowHeight,
 		// Center on first show; minimal WMs (fluxbox, the XEmbed tray path)

@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	urlMacIntel = "https://pkgs.netbird.io/macos/amd64"
-	urlMacM1M2  = "https://pkgs.netbird.io/macos/arm64"
+	// Sightwell fork: until the signed macOS packages exist (phase 2) both
+	// point at the releases page; then at the per-arch .pkg assets.
+	urlMacIntel = "https://github.com/minicloud-io/sightwell-netbird-server/releases/latest"
+	urlMacM1M2  = "https://github.com/minicloud-io/sightwell-netbird-server/releases/latest"
 )
 
 // DownloadUrl return with the proper download link

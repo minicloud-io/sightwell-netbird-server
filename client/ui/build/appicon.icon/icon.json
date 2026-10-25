@@ -1,26 +1,26 @@
 {
-  "fill" : {
-    "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+  "fill": {
+    "solid": "srgb:0.06667,0.07843,0.09020,1.00000"
   },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "wails_icon_vector.svg",
-          "name" : "wails_icon_vector"
+          "image-name": "sightwell-mark.svg",
+          "name": "sightwell-mark"
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "specular" : true
+      "specular": true
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }

@@ -27,9 +27,11 @@ const buttonVariants = cva(
                     "border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-100 hover:text-black focus:ring-neutral-200/50",
                     "dark:border-gray-700/30 dark:bg-nb-gray dark:text-gray-400 dark:hover:bg-zinc-800/50 dark:hover:text-nb-gray-50 dark:focus:ring-zinc-800/50",
                 ],
+                // Sightwell fork: ink text on the signal orange (7.6:1); white on
+                // #F07A3A is 2.9:1 and fails WCAG AA.
                 primary: [
-                    "dark:text-gray-100 dark:ring-offset-neutral-950/50 dark:focus:ring-netbird-600/50 enabled:dark:bg-netbird enabled:dark:hover:bg-netbird-500/80 enabled:dark:hover:text-nb-gray-50 disabled:dark:bg-nb-gray-900",
-                    "enabled:bg-netbird enabled:text-white enabled:hover:bg-netbird-500 enabled:focus:ring-netbird-400/50 disabled:bg-nb-gray-700",
+                    "dark:text-gray-100 dark:ring-offset-neutral-950/50 dark:focus:ring-netbird-600/50 enabled:dark:bg-netbird enabled:dark:text-[#111417] enabled:dark:hover:bg-netbird-300 enabled:dark:hover:text-[#111417] disabled:dark:bg-nb-gray-900",
+                    "enabled:bg-netbird enabled:text-[#111417] enabled:hover:bg-netbird-500 enabled:focus:ring-netbird-400/50 disabled:bg-nb-gray-700",
                 ],
                 secondary: [
                     "border-neutral-200 bg-white text-neutral-900 hover:border-nb-gray-700 hover:bg-nb-gray-950 hover:text-black focus:ring-nb-gray-500/50 focus:ring-offset-0",

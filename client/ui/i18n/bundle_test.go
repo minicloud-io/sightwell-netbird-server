@@ -71,7 +71,8 @@ func TestBundle_TranslateFallsBackToEnglish(t *testing.T) {
 	// applies so the user always sees a populated label rather than the
 	// raw key.
 	got := b.Translate("hu", "notify.update.body", "version", "9.9.9")
-	assert.Equal(t, "NetBird 9.9.9 is available.", got, "missing hu key should fall back to en bundle")
+	// Sightwell fork: notify.update.body is a branded key (brand.go).
+	assert.Equal(t, "Sightwell 9.9.9 is available.", got, "missing hu key should fall back to en bundle")
 }
 
 func TestBundle_TranslateUnknownKeyReturnsKey(t *testing.T) {

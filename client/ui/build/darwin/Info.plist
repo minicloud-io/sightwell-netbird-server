@@ -4,13 +4,13 @@
         <key>CFBundlePackageType</key>
             <string>APPL</string>
         <key>CFBundleName</key>
-            <string>NetBird</string>
+            <string>Sightwell</string>
         <key>CFBundleDisplayName</key>
-            <string>NetBird</string>
+            <string>Sightwell</string>
         <key>CFBundleExecutable</key>
             <string>netbird-ui</string>
         <key>CFBundleIdentifier</key>
-            <string>io.netbird.client</string>
+            <string>ai.sightwell.connectivity</string>
         <key>CFBundleVersion</key>
             <string>0.0.1</string>
         <key>CFBundleGetInfoString</key>
@@ -31,6 +31,6 @@
         <key>LSUIElement</key>
             <string>1</string>
         <key>NSHumanReadableCopyright</key>
-            <string>NetBird GmbH</string>
+            <string>Built on NetBird, Copyright NetBird GmbH and contributors (BSD-3-Clause)</string>
     </dict>
 </plist>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="1024" height="1024">
+  <!-- Sightwell sight-glass mark, reversed for the ink app-icon fill (Icon Composer layer). -->
+  <defs>
+    <mask id="bolts">
+      <rect width="120" height="120" fill="#fff"/>
+      <circle cx="99.73" cy="76.46" r="3.4" fill="#000"/><circle cx="76.46" cy="99.73" r="3.4" fill="#000"/>
+      <circle cx="43.54" cy="99.73" r="3.4" fill="#000"/><circle cx="20.27" cy="76.46" r="3.4" fill="#000"/>
+      <circle cx="20.27" cy="43.54" r="3.4" fill="#000"/><circle cx="43.54" cy="20.27" r="3.4" fill="#000"/>
+      <circle cx="76.46" cy="20.27" r="3.4" fill="#000"/><circle cx="99.73" cy="43.54" r="3.4" fill="#000"/>
+    </mask>
+    <clipPath id="glass"><circle cx="60" cy="60" r="34"/></clipPath>
+  </defs>
+  <g transform="translate(20.4 20.4) scale(0.66)">
+    <circle cx="60" cy="60" r="52" fill="#ECEAE4" mask="url(#bolts)"/>
+    <circle cx="60" cy="60" r="34" fill="#1A1E22"/>
+    <rect x="25" y="66" width="70" height="36" fill="#F07A3A" clip-path="url(#glass)"/>
+    <path d="M40 44 A26 26 0 0 1 58 36" fill="none" stroke="#ECEAE4" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+  </g>
+</svg>

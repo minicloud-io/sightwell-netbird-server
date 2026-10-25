@@ -15,7 +15,9 @@ const (
 )
 
 var (
-	versionURL = "https://pkgs.netbird.io/releases/latest/version"
+	// Sightwell fork: the latest version comes from the fork's GitHub
+	// releases; sightwell-server-image.yml attaches a plain-text "version".
+	versionURL = "https://github.com/minicloud-io/sightwell-netbird-server/releases/latest/download/version"
 )
 
 // Update fetch the version info periodically and notify the onUpdateListener in case the UI version or the

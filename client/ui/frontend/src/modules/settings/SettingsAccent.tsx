@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import netbirdLogo from "@/assets/logos/netbird.svg";
+// Sightwell fork: the accent effect traces the Sightwell mark.
+import netbirdLogo from "@/assets/logos/sightwell.svg";
 
 const scratch = new Uint32Array(1);
 
@@ -118,7 +119,7 @@ function Accent({ onDone }: Readonly<{ onDone: () => void }>) {
                 ctx.textBaseline = "top";
 
                 ctx.shadowBlur = 0;
-                ctx.fillStyle = "rgba(246, 131, 48, 0.5)";
+                ctx.fillStyle = "rgba(240, 122, 58, 0.5)";
                 for (let i = 0; i < drops.length; i++) {
                     const ch = chars[Math.floor(random() * chars.length)];
                     const y = drops[i] * 15;
@@ -184,7 +185,7 @@ function drawGlow(ctx: CanvasRenderingContext2D, mask: Mask | null, frame: numbe
         const seed = mask.seeds[idx];
         const core = mask.cells[idx] === 2;
 
-        ctx.shadowColor = core ? "#f05252" : "#f68330";
+        ctx.shadowColor = core ? "#CB541D" : "#F07A3A";
         ctx.shadowBlur = 10 * heat;
         ctx.fillStyle = core ? `rgba(255, 226, 210, ${heat})` : `rgba(255, 255, 255, ${heat})`;
         ctx.fillText(
