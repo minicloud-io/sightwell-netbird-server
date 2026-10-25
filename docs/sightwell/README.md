@@ -49,6 +49,25 @@ The Sightwell theme itself lives in the dashboard repository,
 Kubernetes mounting instructions in its README. The directory replaces Dex's
 web directory entirely, so it must carry every template.
 
+## Images
+
+Built by `.github/workflows/sightwell-server-image.yml` on tags
+`v*-sightwell.*` (native `linux/amd64` and `linux/arm64` builds from
+`combined/Dockerfile.multistage`, merged into one manifest; every action
+pinned to a commit SHA, and the repository requires that). Pin tag and
+manifest digest together:
+
+| Release | Image |
+| --- | --- |
+| `v0.81.4-sightwell.1` (commit `b29735b3`, 2026-10-25, run 40175893900) | `ghcr.io/minicloud-io/sightwell-netbird-server:v0.81.4-sightwell.1@sha256:311c0b8e9bae21d24c97cecf37a21d3109cee17f971701ecc934a38a77cc9d33` |
+
+Each release carries the corresponding source archive (AGPL-3.0 for the
+`management/`, `signal/`, `relay/` and `combined/` parts). The GHCR package
+is private by default; the cluster needs a pull secret or the package made
+public. Upstream's `Release`, `update docs`, `sync tag` and Discourse
+workflows are disabled in this fork; re-check with `gh workflow list` after
+each upstream merge.
+
 ## Keeping up with upstream
 
 ```bash
