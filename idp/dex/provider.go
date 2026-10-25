@@ -172,6 +172,18 @@ func NewProviderFromYAML(ctx context.Context, yamlConfig *YAMLConfig) (*Provider
 	}
 
 	dexConfig := buildDexConfig(yamlConfig, stor, logger)
+	// A custom frontend directory is served from an in-memory snapshot rather
+	// than straight from disk, so Kubernetes ConfigMap mounts (with their
+	// "..data" entries) work with any layout; see loadThemeFS.
+	if dexConfig.Web.Dir != "" {
+		themeFS, err := loadThemeFS(dexConfig.Web.Dir)
+		if err != nil {
+			stor.Close()
+			return nil, fmt.Errorf("failed to load embedded IdP frontend: %w", err)
+		}
+		dexConfig.Web.WebFS = themeFS
+		dexConfig.Web.Dir = ""
+	}
 	dexConfig.RefreshTokenPolicy, err = yamlConfig.GetRefreshTokenPolicy(logger)
 	if err != nil {
 		stor.Close()
