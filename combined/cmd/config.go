@@ -155,6 +155,18 @@ type AuthConfig struct {
 	Owner                           *AuthOwnerConfig  `yaml:"owner,omitempty"`
 	DashboardPostLogoutRedirectURIs []string          `yaml:"dashboardPostLogoutRedirectURIs"`
 	GrantTypes                      []string          `yaml:"grantTypes"`
+	// Theme replaces the embedded IdP's sign-in, sign-out, password, device and
+	// error pages with a directory on disk (optional).
+	Theme *AuthThemeConfig `yaml:"theme,omitempty"`
+}
+
+// AuthThemeConfig is the auth.theme block: a Dex web directory (templates/,
+// static/, themes/<name>/) and the name the pages display.
+type AuthThemeConfig struct {
+	Dir         string `yaml:"dir"`
+	Name        string `yaml:"name"`
+	DisplayName string `yaml:"displayName"`
+	LogoURL     string `yaml:"logoURL"`
 }
 
 // AuthStorageConfig contains auth storage settings
@@ -634,6 +646,19 @@ func (c *CombinedConfig) buildEmbeddedIdPConfig(mgmt ManagementConfig) (*idp.Emb
 		cfg.Owner = &idp.OwnerConfig{
 			Email: mgmt.Auth.Owner.Email,
 			Hash:  mgmt.Auth.Owner.Password,
+		}
+	}
+
+	if t := mgmt.Auth.Theme; t != nil && (t.Dir != "" || t.Name != "" || t.DisplayName != "" || t.LogoURL != "") {
+		dir := t.Dir
+		if dir != "" && !filePath.IsAbs(dir) {
+			dir = filePath.Join(mgmt.DataDir, dir)
+		}
+		cfg.Frontend = &idp.EmbeddedIdPFrontend{
+			Dir:         dir,
+			Theme:       t.Name,
+			DisplayName: t.DisplayName,
+			LogoURL:     t.LogoURL,
 		}
 	}
 

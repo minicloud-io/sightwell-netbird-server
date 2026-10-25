@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/dexidp/dex/storage"
@@ -82,6 +83,82 @@ type EmbeddedIdPConfig struct {
 	// GrantTypes restricts allowed OAuth2 grants; empty means all (Dex default). Omit the
 	// device_code grant to disable the device flow; keep authorization_code and refresh_token.
 	GrantTypes []string
+	// Frontend replaces the built-in sign-in, sign-out, password, device and error
+	// pages with a theme directory on disk (optional, nil keeps NetBird's pages).
+	Frontend *EmbeddedIdPFrontend
+}
+
+// EmbeddedIdPFrontend configures the look of the embedded IdP's web pages.
+// It maps onto Dex's frontend settings: when Dir is set, Dex serves templates/,
+// static/ and themes/<Theme>/ from that directory instead of the embedded
+// NetBird-styled files. The directory must hold the complete template set,
+// since Dex does not merge it with the built-in one.
+type EmbeddedIdPFrontend struct {
+	// Dir is the theme directory with templates/, static/ and themes/ subfolders.
+	// Empty keeps the built-in pages, in which case the other fields still apply.
+	Dir string
+	// Theme is the folder under Dir/themes that holds the favicon and stylesheet.
+	// Defaults to "light".
+	Theme string
+	// DisplayName is the product name the pages show (Dex's "issuer" string,
+	// used for the page title). Defaults to "NetBird".
+	DisplayName string
+	// LogoURL is an optional logo URL for themes that render one.
+	LogoURL string
+}
+
+const (
+	defaultFrontendDisplayName = "NetBird"
+	defaultFrontendTheme       = "light"
+)
+
+// requiredFrontendTemplates are the templates every theme directory must ship:
+// the shared frame plus the pages a user can reach during sign-in and sign-out.
+var requiredFrontendTemplates = []string{
+	"header.html", "footer.html", "login.html", "logout.html", "password.html", "error.html",
+}
+
+// buildFrontend turns the optional frontend config into Dex's, validating a
+// custom directory up front so a missing template fails at start-up with a
+// clear message instead of on the first sign-in.
+func buildFrontend(f *EmbeddedIdPFrontend) (dex.Frontend, error) {
+	frontend := dex.Frontend{
+		Issuer: defaultFrontendDisplayName,
+		Theme:  defaultFrontendTheme,
+	}
+	if f == nil {
+		return frontend, nil
+	}
+	if f.Theme != "" {
+		frontend.Theme = f.Theme
+	}
+	if f.DisplayName != "" {
+		frontend.Issuer = f.DisplayName
+	}
+	frontend.LogoURL = f.LogoURL
+	if f.Dir == "" {
+		return frontend, nil
+	}
+
+	dir := filepath.Clean(f.Dir)
+	info, err := os.Stat(dir)
+	if err != nil {
+		return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q: %w", dir, err)
+	}
+	if !info.IsDir() {
+		return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q is not a directory", dir)
+	}
+	for _, name := range requiredFrontendTemplates {
+		if _, err := os.Stat(filepath.Join(dir, "templates", name)); err != nil {
+			return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q is missing templates/%s: %w", dir, name, err)
+		}
+	}
+	themeDir := filepath.Join(dir, "themes", frontend.Theme)
+	if info, err := os.Stat(themeDir); err != nil || !info.IsDir() {
+		return dex.Frontend{}, fmt.Errorf("embedded IdP frontend dir %q has no themes/%s directory", dir, frontend.Theme)
+	}
+	frontend.Dir = dir
+	return frontend, nil
 }
 
 // EmbeddedStorageConfig holds storage configuration for the embedded IdP.
@@ -169,6 +246,11 @@ func (c *EmbeddedIdPConfig) ToYAMLConfig() (*dex.YAMLConfig, error) {
 	redirectURIs = append(redirectURIs, cliRedirectURIs...)
 	redirectURIs = append(redirectURIs, dashboardRedirectURIs...)
 
+	frontend, err := buildFrontend(c.Frontend)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &dex.YAMLConfig{
 		Issuer: c.Issuer,
 		Storage: dex.Storage{
@@ -183,10 +265,7 @@ func (c *EmbeddedIdPConfig) ToYAMLConfig() (*dex.YAMLConfig, error) {
 			SkipApprovalScreen: true,
 			GrantTypes:         c.GrantTypes,
 		},
-		Frontend: dex.Frontend{
-			Issuer: "NetBird",
-			Theme:  "light",
-		},
+		Frontend: frontend,
 		// Always enable password DB initially - we disable the local connector after startup if needed.
 		// This ensures Dex has at least one connector during initialization.
 		EnablePasswordDB: true,

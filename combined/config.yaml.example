@@ -100,6 +100,16 @@ server:
     # OAuth2 redirect URIs for CLI
     cliRedirectURIs:
       - "http://localhost:53000/"
+    # Optional theme for the sign-in, sign-out, password, device and error pages.
+    # 'dir' is a Dex web directory holding templates/, static/ and themes/<name>/;
+    # it replaces the built-in pages entirely, so it must contain every template
+    # (header, footer, login, logout, password, error, …). A relative dir is
+    # resolved against dataDir. Missing files fail at start-up.
+    # theme:
+    #   dir: "/etc/netbird/idp-theme"
+    #   name: "sightwell"                   # themes/<name>/, default "light"
+    #   displayName: "Sightwell Connectivity" # page title, default "NetBird"
+    #   logoURL: ""                         # optional, for themes that render it
     # OAuth2 post-logout redirect URIs for dashboard (RP-initiated logout)
     # dashboardPostLogoutRedirectURIs:
     #   - "https://app.example.com/"
