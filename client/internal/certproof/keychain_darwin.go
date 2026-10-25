@@ -16,6 +16,8 @@ import (
 
 	"github.com/ebitengine/purego"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
@@ -28,9 +30,10 @@ const (
 
 // errKeyNeedsApproval reports a key whose access list does not include netbird, so using
 // it needs the user's approval, which a daemon has no UI to ask for.
-var errKeyNeedsApproval = errors.New("the key's access control requires user approval for netbird; " +
-	"import the identity with netbird allowed (security import <identity.p12> -k <keychain> " +
-	"-T /Applications/NetBird.app/Contents/MacOS/netbird), " +
+// Sightwell fork: the command names our daemon binary.
+var errKeyNeedsApproval = errors.New("the key's access control requires user approval for " + hostid.Name + "; " +
+	"import the identity with " + hostid.Name + " allowed (security import <identity.p12> -k <keychain> " +
+	"-T " + hostid.AppPath + "/Contents/MacOS/" + hostid.Name + "), " +
 	"or set AllowAllAppsAccess in the MDM certificate payload, which allows every application")
 
 var (

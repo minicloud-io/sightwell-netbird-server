@@ -11,6 +11,8 @@ import (
 
 	"github.com/netbirdio/netbird/client/iface"
 	"github.com/netbirdio/netbird/shared/management/domain"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 func seededConfig(t *testing.T) *Config {
@@ -235,7 +237,7 @@ func TestDryRunBaselineDoesNotGenerateKeys(t *testing.T) {
 	// Everything the comparison actually looks at is still the default config.
 	require.Equal(t, DefaultManagementURL, baseline.ManagementURL.String())
 	require.Equal(t, uint16(iface.DefaultMTU), baseline.MTU)
-	require.Equal(t, iface.DefaultWgPort, baseline.WgPort)
+	require.Equal(t, hostid.WgPort, baseline.WgPort)
 }
 
 // A stored profile can carry no identity — a mobile logout clears the keys in

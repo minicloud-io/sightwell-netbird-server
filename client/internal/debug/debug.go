@@ -32,6 +32,8 @@ import (
 	nbstatus "github.com/netbirdio/netbird/client/status"
 	mgmProto "github.com/netbirdio/netbird/shared/management/proto"
 	"github.com/netbirdio/netbird/shared/netiputil"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const readmeContent = `This debug bundle contains the following files.
@@ -258,8 +260,9 @@ const (
 	clientLogPrefix = "client"
 	uiLogPrefix     = "gui-client"
 
-	darwinErrorLogPath  = "/var/log/netbird.out.log"
-	darwinStdoutLogPath = "/var/log/netbird.err.log"
+	// Sightwell fork: our launchd job's logs (/var/log/<service>.{out,err}.log).
+	darwinErrorLogPath  = "/var/log/" + hostid.Name + ".out.log"
+	darwinStdoutLogPath = "/var/log/" + hostid.Name + ".err.log"
 )
 
 // MetricsExporter is an interface for exporting metrics

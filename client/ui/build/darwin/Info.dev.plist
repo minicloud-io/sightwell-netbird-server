@@ -8,7 +8,7 @@
         <key>CFBundleDisplayName</key>
             <string>Sightwell</string>
         <key>CFBundleExecutable</key>
-            <string>netbird-ui</string>
+            <string>sightwell-ui</string>
         <key>CFBundleIdentifier</key>
             <string>ai.sightwell.connectivity</string>
         <key>CFBundleVersion</key>

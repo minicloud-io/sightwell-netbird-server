@@ -16,6 +16,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 var (
@@ -64,19 +66,20 @@ func (e *ErrAmbiguousHandle) Error() string {
 
 func init() {
 
-	DefaultConfigPathDir = "/var/lib/netbird/"
-	oldDefaultConfigPathDir = "/etc/netbird/"
+	// Sightwell fork: own directories; the legacy one is ours too, never NetBird's /etc/netbird.
+	DefaultConfigPathDir = hostid.StateDir + "/"
+	oldDefaultConfigPathDir = hostid.ConfigDir
 
 	if stateDir := os.Getenv("NB_STATE_DIR"); stateDir != "" {
 		DefaultConfigPathDir = stateDir
 	} else {
 		switch runtime.GOOS {
 		case "windows":
-			oldDefaultConfigPathDir = filepath.Join(os.Getenv("PROGRAMDATA"), "Netbird")
+			oldDefaultConfigPathDir = filepath.Join(os.Getenv("PROGRAMDATA"), hostid.TitleName)
 			DefaultConfigPathDir = oldDefaultConfigPathDir
 
 		case "freebsd":
-			oldDefaultConfigPathDir = "/var/db/netbird/"
+			oldDefaultConfigPathDir = hostid.BSDStateDir + "/"
 			DefaultConfigPathDir = oldDefaultConfigPathDir
 		}
 	}

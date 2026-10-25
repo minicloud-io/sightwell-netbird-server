@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // UILogFile is the file name the desktop UI writes its log to. It is defined
@@ -20,10 +22,10 @@ func init() {
 	}
 	switch runtime.GOOS {
 	case "windows":
-		StateDir = filepath.Join(os.Getenv("PROGRAMDATA"), "Netbird")
+		StateDir = filepath.Join(os.Getenv("PROGRAMDATA"), hostid.TitleName) // Sightwell fork: own dirs
 	case "darwin", "linux":
-		StateDir = "/var/lib/netbird"
+		StateDir = hostid.StateDir
 	case "freebsd", "openbsd", "netbsd", "dragonfly":
-		StateDir = "/var/db/netbird"
+		StateDir = hostid.BSDStateDir
 	}
 }

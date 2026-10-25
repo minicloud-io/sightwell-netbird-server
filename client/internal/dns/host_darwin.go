@@ -20,11 +20,15 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/netbirdio/netbird/client/internal/statemanager"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
-	netbirdDNSStateKeyFormat            = "State:/Network/Service/NetBird-%s/DNS"
-	netbirdDNSStateKeyIndexedFormat     = "State:/Network/Service/NetBird-%s-%d/DNS"
+	// Sightwell fork: own key prefix. Discovery and cleanup match these
+	// formats, so with NetBird's prefix each daemon would delete the other's DNS.
+	netbirdDNSStateKeyFormat            = "State:/Network/Service/" + hostid.SCKeyPrefix + "-%s/DNS"
+	netbirdDNSStateKeyIndexedFormat     = "State:/Network/Service/" + hostid.SCKeyPrefix + "-%s-%d/DNS"
 	globalIPv4State                     = "State:/Network/Global/IPv4"
 	primaryServiceStateKeyFormat        = "State:/Network/Service/%s/DNS"
 	keySupplementalMatchDomains         = "SupplementalMatchDomains"

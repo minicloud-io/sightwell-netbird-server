@@ -27,6 +27,8 @@ import (
 	daddr "github.com/netbirdio/netbird/client/internal/daemonaddr"
 	"github.com/netbirdio/netbird/client/internal/localmetrics"
 	"github.com/netbirdio/netbird/client/internal/profilemanager"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
@@ -89,7 +91,7 @@ var (
 	localMetricsAddr       string
 
 	rootCmd = &cobra.Command{
-		Use:          "netbird",
+		Use:          hostid.Name, // Sightwell fork: the CLI is /usr/local/bin/sightwell
 		Short:        "",
 		Long:         "",
 		SilenceUsage: true,
@@ -127,21 +129,23 @@ func Execute() error {
 // maps, custom DNS resolver address, Rosenpass options, auto-connect
 // disabling, lazy connection).
 func init() {
-	defaultConfigPathDir = "/etc/netbird/"
-	defaultLogFileDir = "/var/log/netbird/"
+	// Sightwell fork: own directories (client/hostid). The legacy fallbacks
+	// point at our own directories too: /etc/wiretrustee belongs to NetBird.
+	defaultConfigPathDir = hostid.ConfigDir
+	defaultLogFileDir = hostid.LogDir
 
-	oldDefaultConfigPathDir = "/etc/wiretrustee/"
-	oldDefaultLogFileDir = "/var/log/wiretrustee/"
+	oldDefaultConfigPathDir = hostid.ConfigDir
+	oldDefaultLogFileDir = hostid.LogDir
 
 	switch runtime.GOOS {
 	case "windows":
-		defaultConfigPathDir = os.Getenv("PROGRAMDATA") + "\\Netbird\\"
-		defaultLogFileDir = os.Getenv("PROGRAMDATA") + "\\Netbird\\"
+		defaultConfigPathDir = os.Getenv("PROGRAMDATA") + "\\" + hostid.TitleName + "\\"
+		defaultLogFileDir = defaultConfigPathDir
 
-		oldDefaultConfigPathDir = os.Getenv("PROGRAMDATA") + "\\Wiretrustee\\"
-		oldDefaultLogFileDir = os.Getenv("PROGRAMDATA") + "\\Wiretrustee\\"
+		oldDefaultConfigPathDir = defaultConfigPathDir
+		oldDefaultLogFileDir = defaultLogFileDir
 	case "freebsd":
-		defaultConfigPathDir = "/var/db/netbird/"
+		defaultConfigPathDir = hostid.BSDStateDir + "/"
 	}
 
 	defaultConfigPath = defaultConfigPathDir + "config.json"
@@ -150,7 +154,7 @@ func init() {
 	oldDefaultConfigPath = oldDefaultConfigPathDir + "config.json"
 	oldDefaultLogFile = oldDefaultLogFileDir + "client.log"
 
-	defaultDaemonAddr := "unix:///var/run/netbird.sock"
+	defaultDaemonAddr := hostid.DaemonAddr // Sightwell fork
 	if runtime.GOOS == "windows" {
 		defaultDaemonAddr = daddr.WindowsPipeAddr
 	}

@@ -26,6 +26,8 @@ import (
 	mgm "github.com/netbirdio/netbird/shared/management/client"
 	"github.com/netbirdio/netbird/shared/management/domain"
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
@@ -254,7 +256,7 @@ func getConfigDir() (string, error) {
 		return "", err
 	}
 
-	configDir := filepath.Join(base, "netbird")
+	configDir := filepath.Join(base, hostid.UserConfigDirName) // Sightwell fork: own per-user dir
 	// Under sudo this is the invoking user's directory and strictly read-only:
 	// anything root creates in it would be root-owned and break the user's own
 	// runs. Reads of a missing directory fall through to defaults.
@@ -324,7 +326,7 @@ func newConfigSkeleton() *Config {
 		// Remote jobs are an explicit opt-in and default off, including for
 		// legacy configs (a nil value materializes to false at connect time).
 		RemoteJobsAllowed: util.False(),
-		WgPort:            iface.DefaultWgPort,
+		WgPort:            hostid.WgPort, // Sightwell fork: not NetBird's 51820
 	}
 }
 

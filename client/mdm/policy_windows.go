@@ -9,13 +9,15 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/registry"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // policyRegistryPath is the well-known MDM policy registry key for NetBird.
 // Admins push values here through Group Policy, Intune ADMX ingestion, an
 // Intune custom Registry CSP profile, or `reg add` during MSI deployment.
 // Listed in the project's docs/mdm/netbird.admx schema.
-const policyRegistryPath = `Software\Policies\NetBird`
+const policyRegistryPath = `Software\Policies\` + hostid.TitleName // Sightwell fork: own policy key
 
 // readRegistryValue reads a single value under policyRegistryPath and,
 // on success, stores the type-coerced result in out[canonical]. Type

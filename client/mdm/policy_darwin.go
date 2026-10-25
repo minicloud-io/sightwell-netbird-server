@@ -11,6 +11,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"howett.net/plist"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // policyPlistPath is the well-known location where macOS writes the
@@ -18,12 +20,16 @@ import (
 // Apple convention: when an MDM provider (Jamf / Kandji / Mosyle /
 // Intune for Mac / Workspace ONE) pushes a Configuration Profile that
 // contains a com.apple.ManagedClient.preferences payload targeting the
-// bundle id io.netbird.client, the OS materializes the payload here.
+// bundle id ai.sightwell.connectivity (Sightwell fork; upstream:
+// io.netbird.client), the OS materializes the payload here.
 //
 // Read-only — only the OS (root) is supposed to write this file. The
 // loader sanity-checks the file mode and refuses to honour a world-
 // writable plist, as a defense against tampered installs.
-const policyPlistPath = "/Library/Managed Preferences/io.netbird.client.plist"
+//
+// Sightwell fork: our own domain (ai.sightwell.connectivity), so a NetBird
+// MDM profile never configures Sightwell and vice versa.
+const policyPlistPath = "/Library/Managed Preferences/" + hostid.MDMDomain + ".plist"
 
 // loadPlatform reads the MDM-managed configuration from the macOS
 // managed-preferences plist at policyPlistPath, unless a fetcher was

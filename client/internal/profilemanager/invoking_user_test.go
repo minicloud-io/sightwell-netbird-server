@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 func TestInvokingUserFallsBackToProcessUser(t *testing.T) {
@@ -156,7 +158,7 @@ func TestGetConfigDirUnderSudoIsReadOnly(t *testing.T) {
 
 	dir, err := getConfigDir()
 	require.NoError(t, err)
-	assert.Equal(t, filepath.Join(base, "netbird"), dir)
+	assert.Equal(t, filepath.Join(base, hostid.UserConfigDirName), dir)
 	assert.NoDirExists(t, dir)
 }
 

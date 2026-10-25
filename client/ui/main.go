@@ -22,6 +22,8 @@ import (
 	"github.com/netbirdio/netbird/client/ui/services"
 	"github.com/netbirdio/netbird/client/ui/updater"
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 //go:embed all:frontend/dist
@@ -279,8 +281,9 @@ func newApplication(onSecondInstance func()) *application.App {
 		// installer pre-populates with the toast activator CLSID; otherwise
 		// toasts show under a different identity and the MSI's CustomActivator
 		// value is orphaned.
-		// Sightwell fork: product name; UniqueID below stays NetBird's on
-		// purpose, so this UI and a NetBird UI never drive one daemon at once.
+		// Sightwell fork: product name. UniqueID and ProgramName below are
+		// Sightwell's own (client/hostid), so this UI runs beside a NetBird UI;
+		// each drives its own daemon.
 		Name:        i18n.AppName,
 		Description: i18n.ProductName + " desktop client (built on NetBird)",
 		Icon:        appIcon,
@@ -292,7 +295,7 @@ func newApplication(onSecondInstance func()) *application.App {
 			ActivationPolicy: application.ActivationPolicyAccessory,
 		},
 		Linux: application.LinuxOptions{
-			ProgramName:                   "netbird",
+			ProgramName:                   hostid.Name,
 			DisableQuitOnLastWindowClosed: true,
 		},
 		Windows: application.WindowsOptions{
@@ -300,7 +303,7 @@ func newApplication(onSecondInstance func()) *application.App {
 			DisableQuitOnLastWindowClosed: true,
 		},
 		SingleInstance: &application.SingleInstanceOptions{
-			UniqueID: "io.netbird.ui",
+			UniqueID: hostid.UIUniqueID,
 			OnSecondInstanceLaunch: func(_ application.SecondInstanceData) {
 				onSecondInstance()
 			},

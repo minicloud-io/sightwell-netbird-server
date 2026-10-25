@@ -3,6 +3,8 @@ package installer
 import (
 	"context"
 	"os/exec"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 var (
@@ -11,7 +13,8 @@ var (
 )
 
 func TypeOfInstaller(ctx context.Context) Type {
-	cmd := exec.CommandContext(ctx, "pkgutil", "--pkg-info", "io.netbird.client")
+	// Sightwell fork: our own package receipt, never NetBird's io.netbird.client.
+	cmd := exec.CommandContext(ctx, "pkgutil", "--pkg-info", hostid.PkgID)
 	_, err := cmd.Output()
 	if err != nil && cmd.ProcessState.ExitCode() == 1 {
 		// Not installed using pkg file, thus installed using Homebrew

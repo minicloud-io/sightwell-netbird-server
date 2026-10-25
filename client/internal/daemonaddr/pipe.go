@@ -8,6 +8,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
@@ -15,7 +17,7 @@ const (
 	// carries the connecting process's token, which loopback TCP does not, so
 	// it is the only Windows transport on which the daemon can tell who is
 	// calling it.
-	WindowsPipeAddr = "npipe://netbird"
+	WindowsPipeAddr = "npipe://" + hostid.Name // Sightwell fork: own pipe
 
 	// legacyWindowsAddr is the loopback-TCP address the Windows daemon used
 	// before named-pipe support.

@@ -13,6 +13,8 @@ import (
 
 	"github.com/ebitengine/purego"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // Authorization Services, reached through purego rather than cgo so the released
@@ -71,7 +73,7 @@ const rightExecute = "system.privilege.admin"
 // the system's in the dialog. It is about the change rather than the mechanism.
 const (
 	promptKey  = "prompt"
-	promptText = "NetBird needs to change a setting that grants SSH access to this computer."
+	promptText = hostid.TitleName + " needs to change a setting that grants SSH access to this computer." // Sightwell fork
 )
 
 // OSStatus values from SecBase.h that mean something to us; anything else is

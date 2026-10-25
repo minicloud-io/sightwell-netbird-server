@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 var ErrGetServiceStatus = fmt.Errorf("failed to get service status")
@@ -293,7 +295,7 @@ func isServiceRunning() (bool, error) {
 const (
 	networkdConf        = "/etc/systemd/networkd.conf"
 	networkdConfDir     = "/etc/systemd/networkd.conf.d"
-	networkdConfFile    = "/etc/systemd/networkd.conf.d/99-netbird.conf"
+	networkdConfFile    = "/etc/systemd/networkd.conf.d/99-" + hostid.Name + ".conf" // Sightwell fork
 	networkdConfContent = `# Created by NetBird to prevent systemd-networkd from removing
 # routes and policy rules managed by NetBird.
 

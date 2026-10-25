@@ -9,6 +9,8 @@ import (
 
 	"github.com/Microsoft/go-winio"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // probeTimeout bounds each transport probe. Both are local, so a daemon that is
@@ -36,7 +38,7 @@ func ResolveDaemonAddr(addr string) string {
 		return addr
 	}
 
-	for _, path := range PipePaths("netbird") {
+	for _, path := range PipePaths(hostid.Name) { // Sightwell fork
 		if pipeAvailable(path) {
 			return addr
 		}

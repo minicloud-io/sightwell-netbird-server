@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/netbirdio/netbird/client/internal/peer"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 type SessionWatcher struct {
@@ -74,7 +76,7 @@ func CheckUIApp() bool {
 
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
-		if strings.Contains(line, "netbird-ui") && !strings.Contains(line, "grep") {
+		if strings.Contains(line, hostid.UIProcess) && !strings.Contains(line, "grep") { // Sightwell fork: our UI, not NetBird's
 			return true
 		}
 	}

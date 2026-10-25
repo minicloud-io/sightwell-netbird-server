@@ -14,6 +14,8 @@ import (
 	"github.com/netbirdio/netbird/client/internal/daemonaddr"
 	"github.com/netbirdio/netbird/client/proto"
 	"github.com/netbirdio/netbird/client/ui/desktop"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // Conn is the lazy, lock-protected gRPC connection shared by all services so they reuse one channel.
@@ -67,5 +69,5 @@ func DaemonAddr() string {
 	if runtime.GOOS == "windows" {
 		return daemonaddr.WindowsPipeAddr
 	}
-	return "unix:///var/run/netbird.sock"
+	return hostid.DaemonAddr // Sightwell fork
 }

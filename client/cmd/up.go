@@ -28,6 +28,8 @@ import (
 	"github.com/netbirdio/netbird/client/system"
 	"github.com/netbirdio/netbird/shared/management/domain"
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
@@ -71,7 +73,7 @@ var (
 func init() {
 	upCmd.PersistentFlags().BoolVarP(&foregroundMode, "foreground-mode", "F", false, "start service in foreground")
 	upCmd.PersistentFlags().StringVar(&interfaceName, interfaceNameFlag, iface.WgInterfaceDefault, "WireGuard interface name")
-	upCmd.PersistentFlags().Uint16Var(&wireguardPort, wireguardPortFlag, iface.DefaultWgPort, "WireGuard interface listening port")
+	upCmd.PersistentFlags().Uint16Var(&wireguardPort, wireguardPortFlag, hostid.WgPort, "WireGuard interface listening port") // Sightwell fork
 	upCmd.PersistentFlags().Uint16Var(&mtu, mtuFlag, iface.DefaultMTU, "Set MTU (Maximum Transmission Unit) for the WireGuard interface")
 	upCmd.PersistentFlags().BoolVarP(&networkMonitor, networkMonitorFlag, "N", networkMonitor,
 		`Manage network monitoring. Defaults to true on Windows and macOS, false on Linux and FreeBSD. `+

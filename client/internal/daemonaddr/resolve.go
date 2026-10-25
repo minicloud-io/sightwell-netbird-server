@@ -8,9 +8,11 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
-var scanDir = "/var/run/netbird"
+var scanDir = hostid.SocketDir // Sightwell fork: never NetBird's sockets
 
 // setScanDir overrides the scan directory (used by tests).
 func setScanDir(dir string) {

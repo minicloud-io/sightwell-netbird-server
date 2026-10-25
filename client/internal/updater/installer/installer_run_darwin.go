@@ -13,16 +13,20 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
-	daemonName    = "netbird"
+	// Sightwell fork: our daemon, app, temp dir and universal package; an
+	// update must never install, start or stop NetBird.
+	daemonName    = hostid.Name
 	updaterBinary = "updater"
-	uiBinary      = "/Applications/NetBird.app"
+	uiBinary      = hostid.AppPath
 
-	defaultTempDir = "/var/lib/netbird/tmp-install"
+	defaultTempDir = hostid.StateDir + "/tmp-install"
 
-	pkgDownloadURL = "https://github.com/netbirdio/netbird/releases/download/v%version/netbird_%version_darwin_%arch.pkg"
+	pkgDownloadURL = hostid.ReleasesURL + "/download/v%version/Sightwell-%version.pkg"
 )
 
 var (
@@ -160,6 +164,13 @@ func (u *Installer) installPkgFile(ctx context.Context, path string) error {
 func (u *Installer) updateHomeBrew(ctx context.Context) error {
 	log.Infof("updating homebrew")
 
+	// Sightwell fork: there is no Sightwell Homebrew formula, and the code
+	// below would upgrade NetBird's (netbirdio/tap/netbird). Without our
+	// package receipt there is nothing safe to update.
+	if hostid.Name != "netbird" {
+		return fmt.Errorf("%s was not installed from its package (%s); install the latest package from %s", hostid.TitleName, hostid.PkgID, hostid.ReleasesURL)
+	}
+
 	// Kill any existing UI processes before upgrade
 	// This ensures the new version will be started after upgrade
 	u.killUI()
@@ -220,7 +231,7 @@ func (u *Installer) updateHomeBrew(ctx context.Context) error {
 
 func (u *Installer) killUI() {
 	log.Infof("killing existing netbird-ui processes")
-	cmd := exec.Command("pkill", "-x", "netbird-ui")
+	cmd := exec.Command("pkill", "-x", hostid.UIProcess) // Sightwell fork: never NetBird's UI
 	if output, err := cmd.CombinedOutput(); err != nil {
 		// pkill returns exit code 1 if no processes matched, which is fine
 		log.Debugf("pkill netbird-ui result: %v, output: %s", err, string(output))

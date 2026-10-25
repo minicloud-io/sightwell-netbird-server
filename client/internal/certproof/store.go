@@ -13,11 +13,13 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
 	StoreDirEnv     = "NB_CERT_STORE_DIR"
-	defaultStoreDir = "/etc/netbird/certs"
+	defaultStoreDir = hostid.ConfigDir + "certs" // Sightwell fork
 
 	// maxStoreFileSize bounds a certificate or key file of the PEM directory. A chain with
 	// its key is a few kilobytes.

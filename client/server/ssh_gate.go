@@ -18,6 +18,8 @@ import (
 	"github.com/netbirdio/netbird/client/internal/profilemanager"
 	"github.com/netbirdio/netbird/client/proto"
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // The daemon runs as root/LocalSystem, so a handful of config changes cross the
@@ -215,9 +217,9 @@ func unidentifiedSummary(action string) string {
 // callers can be identified.
 func reinstallCommand() string {
 	if runtime.GOOS == "windows" {
-		return fmt.Sprintf("netbird service install --daemon-addr %s", daemonaddr.WindowsPipeAddr)
+		return fmt.Sprintf("%s service install --daemon-addr %s", hostid.Name, daemonaddr.WindowsPipeAddr)
 	}
-	return "sudo netbird service install --daemon-addr unix:///var/run/netbird.sock"
+	return "sudo " + hostid.Name + " service install --daemon-addr " + hostid.DaemonAddr // Sightwell fork
 }
 
 func capitalize(s string) string {

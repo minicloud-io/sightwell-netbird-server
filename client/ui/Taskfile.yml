@@ -7,9 +7,10 @@ includes:
   linux: ./build/linux/Taskfile.yml
 
 vars:
-  APP_NAME: "netbird-ui"
-  # Sightwell fork: the .app is named after the product; the binary keeps
-  # upstream's name, which installer scripts and launchd jobs refer to.
+  # Sightwell fork: own binary and bundle names, so Sightwell's installer and
+  # process checks never match NetBird's UI (netbird-ui, NetBird.app) when
+  # both are installed side by side.
+  APP_NAME: "sightwell-ui"
   BUNDLE_NAME: "Sightwell"
   BIN_DIR: "bin"
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'

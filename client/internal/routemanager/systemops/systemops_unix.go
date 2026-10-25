@@ -36,10 +36,15 @@ func init() {
 	switch os.Getenv(envRouteProtoFlag) {
 	case "2":
 		routeProtoFlag = unix.RTF_PROTO2
+	case "1":
+		routeProtoFlag = unix.RTF_PROTO1
 	case "3":
 		routeProtoFlag = unix.RTF_PROTO3
 	default:
-		routeProtoFlag = unix.RTF_PROTO1
+		// Sightwell fork: NetBird tags its routes RTF_PROTO1 and flushes every
+		// route carrying its tag at startup; ours default to RTF_PROTO2 so
+		// neither daemon deletes the other's routes.
+		routeProtoFlag = unix.RTF_PROTO2
 	}
 }
 

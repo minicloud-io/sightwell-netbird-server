@@ -14,10 +14,14 @@ import (
 
 	"github.com/netbirdio/netbird/client/proto"
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
-	NetBirdSSHConfigFile = "99-netbird.conf"
+	// Sightwell fork: own ssh_config snippet; with NetBird's name the last
+	// daemon to write it would drop the other's peers.
+	NetBirdSSHConfigFile = "99-" + hostid.Name + ".conf"
 
 	UnixSSHConfigDir    = "/etc/ssh/ssh_config.d"
 	WindowsSSHConfigDir = "ssh/ssh_config.d"

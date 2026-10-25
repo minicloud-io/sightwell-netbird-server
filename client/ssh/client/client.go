@@ -24,11 +24,13 @@ import (
 	"github.com/netbirdio/netbird/client/ssh/detection"
 	"github.com/netbirdio/netbird/util"
 	"github.com/netbirdio/netbird/util/netrelay"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 const (
 	// DefaultDaemonAddr is the default address for the NetBird daemon
-	DefaultDaemonAddr = "unix:///var/run/netbird.sock"
+	DefaultDaemonAddr = hostid.DaemonAddr // Sightwell fork
 	// DefaultDaemonAddrWindows is the default address for the NetBird daemon on Windows
 	DefaultDaemonAddrWindows = daemonaddr.WindowsPipeAddr
 )
@@ -437,10 +439,10 @@ func getKnownHostsFiles() []string {
 		if programData == "" {
 			programData = `C:\ProgramData`
 		}
-		netbirdKnownHosts := filepath.Join(programData, "ssh", "ssh_known_hosts.d", "99-netbird")
+		netbirdKnownHosts := filepath.Join(programData, "ssh", "ssh_known_hosts.d", "99-"+hostid.Name)
 		files = append(files, netbirdKnownHosts)
 	} else {
-		files = append(files, "/etc/ssh/ssh_known_hosts.d/99-netbird")
+		files = append(files, "/etc/ssh/ssh_known_hosts.d/99-"+hostid.Name) // Sightwell fork
 		files = append(files, "/etc/ssh/ssh_known_hosts")
 	}
 

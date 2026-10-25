@@ -17,6 +17,8 @@ import (
 
 	"github.com/netbirdio/netbird/client/internal"
 	"github.com/netbirdio/netbird/client/server"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 var serviceCmd = &cobra.Command{
@@ -24,7 +26,7 @@ var serviceCmd = &cobra.Command{
 	Short: "Manage the NetBird daemon service",
 }
 
-const defaultJSONSocket = "unix:///var/run/netbird-http.sock"
+const defaultJSONSocket = "unix:///var/run/" + hostid.Name + "-http.sock" // Sightwell fork
 
 // forbiddenServiceEnvVars are the environment variables the service is never
 // registered with, keyed in upper case since these are Windows names. Each one
@@ -73,9 +75,10 @@ type program struct {
 }
 
 func init() {
-	defaultServiceName := "netbird"
+	// Sightwell fork: own service (launchd label, systemd unit, Windows service).
+	defaultServiceName := hostid.Name
 	if runtime.GOOS == "windows" {
-		defaultServiceName = "Netbird"
+		defaultServiceName = hostid.TitleName
 	}
 
 	serviceCmd.AddCommand(runCmd, startCmd, stopCmd, restartCmd, svcStatusCmd, installCmd, uninstallCmd, reconfigureCmd, resetParamsCmd)

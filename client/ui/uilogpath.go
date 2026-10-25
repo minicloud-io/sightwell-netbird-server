@@ -10,6 +10,8 @@ import (
 
 	"github.com/netbirdio/netbird/client/configs"
 	"github.com/netbirdio/netbird/client/ui/guilog"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // uiLogPath returns the GUI log path with native separators, since the daemon
@@ -20,7 +22,7 @@ func uiLogPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "netbird", configs.UILogFile), nil
+	return filepath.Join(dir, hostid.UserConfigDirName, configs.UILogFile), nil // Sightwell fork
 }
 
 // newDebugLog builds the GUI debug log, disabled when userSetLogFile is set

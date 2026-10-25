@@ -18,6 +18,8 @@ import (
 
 	"github.com/netbirdio/netbird/client/ui/i18n"
 	"github.com/netbirdio/netbird/util"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // Lives under os.UserConfigDir()/netbird (OS-user writable, not the daemon's
@@ -381,5 +383,5 @@ func preferencesPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "netbird", preferencesFileName), nil
+	return filepath.Join(dir, hostid.UserConfigDirName, preferencesFileName), nil // Sightwell fork
 }

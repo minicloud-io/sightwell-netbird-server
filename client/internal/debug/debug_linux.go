@@ -19,6 +19,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/netbirdio/netbird/client/internal/routemanager/systemops"
+
+	"github.com/netbirdio/netbird/client/hostid"
 )
 
 // addIPRules collects and adds IP rules to the archive
@@ -79,7 +81,7 @@ func getServiceName() string {
 		return unitName
 	}
 
-	return "netbird"
+	return hostid.Name // Sightwell fork
 }
 
 // getSystemdLogs retrieves logs from systemd journal for a specific service using journalctl
