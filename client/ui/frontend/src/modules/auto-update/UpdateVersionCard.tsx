@@ -6,8 +6,12 @@ import { Update as UpdateSvc } from "@bindings/services";
 import { Button } from "@/components/buttons/Button";
 import { useClientVersion } from "@/contexts/ClientVersionContext";
 import { cn } from "@/lib/cn";
+import brand from "../../../../i18n/brand.json";
 
-const GITHUB_RELEASES = "https://github.com/netbirdio/netbird/releases/latest";
+// Sightwell fork: our releases (i18n/brand.json, links.releases), the same
+// source the update check reads (version/update.go).
+const RELEASES = brand.links.releases;
+const GITHUB_RELEASES = `${RELEASES}/latest`;
 
 function openUrl(url: string) {
     Browser.OpenURL(url).catch(() => {
@@ -33,9 +37,7 @@ export function UpdateVersionCard() {
             <Card className={"max-w-lg"}>
                 <div>
                     <Title>{t(titleKey, { version: updateVersion })}</Title>
-                    <Link
-                        url={`https://github.com/netbirdio/netbird/releases/tag/v${updateVersion}`}
-                    >
+                    <Link url={`${RELEASES}/tag/v${updateVersion}`}>
                         {t("update.card.whatsNew")}
                     </Link>
                 </div>

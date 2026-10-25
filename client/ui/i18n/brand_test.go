@@ -4,6 +4,7 @@ package i18n
 
 import (
 	"encoding/json"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,6 +70,23 @@ func TestSelfHostedMessagesCoverEveryLocale(t *testing.T) {
 			bundle, err := b.BundleFor(l.Code)
 			require.NoError(t, err)
 			assert.Equal(t, text, bundle[key], "%s %s not applied", key, l.Code)
+		}
+	}
+}
+
+// Sightwell fork: the About page reads links.* from brand.json; keep them
+// present and on https so a typo can't ship a dead or insecure link.
+func TestBrandLinks(t *testing.T) {
+	var cfg struct {
+		Links map[string]string `json:"links"`
+	}
+	if err := json.Unmarshal(brandJSON, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range []string{"slack", "documentation", "releases"} {
+		u, err := url.Parse(cfg.Links[k])
+		if err != nil || u.Scheme != "https" || u.Host == "" {
+			t.Errorf("links.%s = %q, want an https URL", k, cfg.Links[k])
 		}
 	}
 }

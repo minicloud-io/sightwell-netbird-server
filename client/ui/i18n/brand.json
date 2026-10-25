@@ -57,6 +57,12 @@
   "features": {
     "netbirdCloud": false
   },
+  "_linksComment": "About page links. GitHub, Forum and Feedback (NetBird's) are not shown; the client is BSD-3-Clause, so links are ours to choose. releases: Changelog and What's new (our fork's GitHub releases, same source as the update check in version/update.go).",
+  "links": {
+    "slack": "https://sightwell.slack.com",
+    "documentation": "https://sightwell.ai/connectivity",
+    "releases": "https://github.com/minicloud-io/sightwell-netbird-server/releases"
+  },
   "_selfHostedComment": "Applied only when features.netbirdCloud is false: these keys offer NetBird Cloud upstream. Translations are new (reusing each locale's existing terms) and should get a native-speaker review.",
   "selfHostedMessages": {
     "welcome.management.description": {
