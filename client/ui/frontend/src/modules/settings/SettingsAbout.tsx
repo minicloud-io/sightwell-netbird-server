@@ -59,7 +59,9 @@ export function SettingsAbout() {
     ];
 
     // Sightwell fork: legal row from i18n/brand.json (legalLinks).
-    const LEGAL_LINKS: { label: string; url: string }[] = brand.legalLinks.map(({ key, url }) => ({
+    // Empty hides the row (no Sightwell legal pages yet).
+    const legalLinks: { key: string; url: string }[] = brand.legalLinks;
+    const LEGAL_LINKS: { label: string; url: string }[] = legalLinks.map(({ key, url }) => ({
         label: t(`settings.about.links.${key}`),
         url,
     }));
@@ -136,23 +138,27 @@ export function SettingsAbout() {
                     </button>
                 ))}
             </div>
-            <div
-                className={"flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-nb-gray-200"}
-            >
-                {LEGAL_LINKS.map((link) => (
-                    <button
-                        key={link.url}
-                        type={"button"}
-                        tabIndex={0}
-                        onClick={() => openUrl(link.url)}
-                        className={
-                            "rounded-sm decoration-[0.5px] underline-offset-4 outline-none transition hover:text-nb-gray-100 hover:underline focus-visible:ring-2 focus-visible:ring-nb-gray-50/60 focus-visible:ring-offset-2 focus-visible:ring-offset-nb-gray-940"
-                        }
-                    >
-                        {link.label}
-                    </button>
-                ))}
-            </div>
+            {LEGAL_LINKS.length > 0 && (
+                <div
+                    className={
+                        "flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-nb-gray-200"
+                    }
+                >
+                    {LEGAL_LINKS.map((link) => (
+                        <button
+                            key={link.url}
+                            type={"button"}
+                            tabIndex={0}
+                            onClick={() => openUrl(link.url)}
+                            className={
+                                "rounded-sm decoration-[0.5px] underline-offset-4 outline-none transition hover:text-nb-gray-100 hover:underline focus-visible:ring-2 focus-visible:ring-nb-gray-50/60 focus-visible:ring-offset-2 focus-visible:ring-offset-nb-gray-940"
+                            }
+                        >
+                            {link.label}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

@@ -112,7 +112,7 @@ func TestAllLocaleMessagesApplied(t *testing.T) {
 }
 
 // The About page's legal row comes from brand.json legalLinks: every entry
-// needs a translated label (settings.about.links.<key>) and an https URL.
+// (if any) needs a translated label (settings.about.links.<key>) and an https URL.
 func TestLegalLinks(t *testing.T) {
 	var cfg struct {
 		LegalLinks []struct {
@@ -121,7 +121,7 @@ func TestLegalLinks(t *testing.T) {
 		} `json:"legalLinks"`
 	}
 	require.NoError(t, json.Unmarshal(brandJSON, &cfg))
-	require.NotEmpty(t, cfg.LegalLinks)
+	// Empty is allowed: the About page then hides the legal row.
 	data, err := os.ReadFile(filepath.Join("locales", "en", commonBundleFile))
 	require.NoError(t, err)
 	var entries map[string]bundleEntry
