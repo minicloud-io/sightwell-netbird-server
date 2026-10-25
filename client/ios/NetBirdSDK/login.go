@@ -236,6 +236,65 @@ func (a *Auth) LoginInteractive(resultListener ErrListener, urlOpener URLOpener,
 	a.startLogin(resultListener, urlOpener, forceDeviceAuth, deviceName, true)
 }
 
+// LoginWithUpstreamToken signs in with a token from the identity provider
+// behind the management server's IdP (Sightwell fork; for example an Entra ID
+// token obtained on the device with MSAL). The token is exchanged (RFC 8693) at
+// the token endpoint the management server announces for device sign-in, then
+// used like a browser sign-in token. subjectTokenType defaults to the ID token
+// type; connectorID names the Dex connector that trusts the upstream token.
+// The result arrives on resultListener, as for LoginInteractive.
+func (a *Auth) LoginWithUpstreamToken(resultListener ErrListener, subjectToken, subjectTokenType, connectorID, deviceName string) {
+	if resultListener == nil {
+		log.Errorf("LoginWithUpstreamToken: resultListener is nil")
+		return
+	}
+	go func() {
+		if err := a.loginWithUpstreamToken(subjectToken, subjectTokenType, connectorID, deviceName); err != nil {
+			resultListener.OnError(err)
+			return
+		}
+		resultListener.OnSuccess()
+	}()
+}
+
+func (a *Auth) loginWithUpstreamToken(subjectToken, subjectTokenType, connectorID, deviceName string) error {
+	ctx := a.ctx
+	if deviceName != "" {
+		//nolint:staticcheck
+		ctx = context.WithValue(a.ctx, system.DeviceNameCtxKey, deviceName)
+	}
+
+	authClient, err := auth.NewAuth(ctx, a.config.PrivateKey, a.config.ManagementURL, a.config)
+	if err != nil {
+		return fmt.Errorf("failed to create auth client: %v", err)
+	}
+	defer authClient.Close()
+
+	tokenInfo, err := authClient.ExchangeUpstreamToken(ctx, auth.UpstreamToken{
+		SubjectToken:     subjectToken,
+		SubjectTokenType: subjectTokenType,
+		ConnectorID:      connectorID,
+	})
+	if err != nil {
+		return err
+	}
+
+	err, isAuthError := authClient.Login(ctx, "", tokenInfo.GetTokenToUse())
+	if err != nil {
+		if isAuthError {
+			return fmt.Errorf("authentication error: %v", err)
+		}
+		return fmt.Errorf("login failed: %v", err)
+	}
+
+	if tokenInfo.Email != "" && a.cfgPath != "" {
+		if err := mobile.WriteProfileEmail(a.cfgPath, tokenInfo.Email); err != nil {
+			log.Warnf("failed to store profile account email: %v", err)
+		}
+	}
+	return nil
+}
+
 func (a *Auth) startLogin(resultListener ErrListener, urlOpener URLOpener, forceDeviceAuth bool, deviceName string, skipLoginCheck bool) {
 	if resultListener == nil {
 		log.Errorf("startLogin: resultListener is nil")
