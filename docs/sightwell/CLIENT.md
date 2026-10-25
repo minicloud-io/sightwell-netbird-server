@@ -3,7 +3,9 @@
 Branch `feat/client-branding` (on `feat/idp-theme`, upstream `v0.81.4`)
 rebrands the NetBird desktop UI, `client/ui` (Wails v3, Go + React), as
 **Sightwell**. Phase 1 is the visual rebrand and a local, unsigned macOS
-build. Signing, notarisation, the installer and the daemon are phase 2.
+build. Signing, notarisation, the installer and the daemon are phase 2;
+the own daemon identity and the unsigned installer are on
+`feat/client-side-by-side` (see `SIDE-BY-SIDE.md`).
 
 ## Decisions taken (reversible)
 
@@ -11,9 +13,9 @@ build. Signing, notarisation, the installer and the daemon are phase 2.
 | --- | --- | --- |
 | Name in menu bar, Finder, windows | **Sightwell** | "Sightwell Connectivity" is too long for the menu bar; the About page uses the full name |
 | Bundle identifier | `ai.sightwell.connectivity` | reverse of sightwell.ai; makes it a distinct app to macOS (notifications, login item, permissions) |
-| App bundle | `Sightwell.app`, binary still `netbird-ui` | installer scripts and launchd jobs refer to the binary name |
-| Single-instance ID | `io.netbird.ui` (unchanged) | a NetBird UI and the Sightwell UI must never drive the same daemon at once |
-| MDM domain, installer receipt | `io.netbird.client` (unchanged) | both belong to the daemon, which is NetBird's in phase 1 |
+| App bundle | `Sightwell.app`, UI binary `sightwell-ui`, daemon `sightwell` | phase 2: own names so Sightwell runs beside NetBird (see SIDE-BY-SIDE.md) |
+| Single-instance ID | `ai.sightwell.connectivity.ui` | phase 2: each UI drives its own daemon, so both can run at once |
+| MDM domain, installer receipt | `ai.sightwell.connectivity`, `ai.sightwell.connectivity.pkg` | phase 2: Sightwell ships its own daemon; NetBird's MDM profiles and receipt are never touched |
 
 ## What changed
 
@@ -42,7 +44,7 @@ build. Signing, notarisation, the installer and the daemon are phase 2.
 
 ## Known limits of phase 1
 
-- **The daemon is still NetBird's.** The UI drives whatever `netbird`
+- **The daemon is still NetBird's** (phase 1 only; phase 2 ships `sightwell`, see SIDE-BY-SIDE.md). The UI drives whatever `netbird`
   service is installed. Update prompts in the UI come from that daemon,
   which checks NetBird's package server and, when the management server
   enables auto-update, downloads and installs NetBird's signed package
@@ -71,9 +73,9 @@ open bin/Sightwell.app
 
 Requires Xcode (with `actool` for `Assets.car`), Go per `go.mod`, Node and
 pnpm. The bundle is ad-hoc signed by the task; it runs on the machine that
-built it but cannot be distributed (Gatekeeper). It drives the locally
-installed `netbird` service; with NetBird's own UI running, the Sightwell UI
-hands off to it (shared single-instance ID) and exits.
+built it but cannot be distributed (Gatekeeper). Since phase 2 it drives the
+`sightwell` service (`/var/run/sightwell.sock`), not NetBird's; install it with
+the package (`docs/sightwell/SIDE-BY-SIDE.md`).
 
 Regenerate icons after changing the mark: `python3 client/ui/build/sightwell/icons.py`.
 

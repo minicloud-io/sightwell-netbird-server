@@ -1,0 +1,72 @@
+# Sightwell fork: builds the unsigned macOS installer package (daemon + UI,
+# universal) and keeps it as a workflow artifact. Nothing is published:
+# signing and notarisation (Developer ID: MINICLOUD FZCO) come later.
+name: Sightwell client (macOS, unsigned)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to stamp (default: git describe of the nearest v*-sightwell.* tag + -dev)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sightwell-client-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11
+
+      - name: Install wails3 and task
+        # wails3 matches the Wails version go.mod requires (as upstream's release does).
+        run: |
+          WAILS_VERSION=$(go list -m -f '{{.Version}}' github.com/wailsapp/wails/v3)
+          go install "github.com/wailsapp/wails/v3/cmd/wails3@${WAILS_VERSION}"
+          go install github.com/go-task/task/v3/cmd/task@v3.54.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          v="$INPUT_VERSION"
+          if [ -z "$v" ]; then
+            v="$(git describe --tags --match 'v*-sightwell.*' --abbrev=0 2>/dev/null || echo v0.0.0-sightwell.0)-dev"
+          fi
+          echo "version=${v#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: sh release_files/sightwell-macos-pkg.sh "$VERSION" dist/sightwell-macos
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sightwell-macos-unsigned-${{ steps.version.outputs.version }}
+          path: dist/sightwell-macos/
+          retention-days: 7
+          if-no-files-found: error

@@ -68,11 +68,17 @@ LC_ALL=C sort -u "$modules" >"$sorted_modules"
 
 goroot=$(go env GOROOT)
 for term in LICENSE PATENTS; do
-	if [ ! -f "$goroot/$term" ]; then
+	src="$goroot/$term"
+	# Sightwell fork: some Go distributions (Homebrew) omit GOROOT/LICENSE;
+	# GO_STDLIB_TERMS_DIR may supply the identical Go Authors text instead.
+	if [ ! -f "$src" ] && [ -n "${GO_STDLIB_TERMS_DIR:-}" ]; then
+		src="$GO_STDLIB_TERMS_DIR/$term"
+	fi
+	if [ ! -f "$src" ]; then
 		printf 'missing Go standard-library term: %s\n' "$goroot/$term" >&2
 		exit 1
 	fi
-	cp "$goroot/$term" "$staging/Go-$term"
+	cp "$src" "$staging/Go-$term"
 done
 
 while IFS='	' read -r module version module_dir; do

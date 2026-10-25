@@ -1,0 +1,58 @@
+#!/bin/sh
+# Sightwell fork: macOS package post-install, adapted from
+# release_files/darwin_pkg/postinstall. Installs Sightwell's own service
+# ("sightwell", socket /var/run/sightwell.sock) and command
+# (/usr/local/bin/sightwell) beside any NetBird install.
+
+set -x
+
+APP=/Applications/Sightwell.app
+AGENT=/usr/local/bin/sightwell
+LOG_DIR=/var/log/sightwell
+LOG_FILE=$LOG_DIR/client_post_install.log
+
+mkdir -p "$LOG_DIR"
+mkdir -p /usr/local/bin/
+
+{
+    echo "Installing Sightwell..."
+
+    if test -d $APP; then
+        echo "Sightwell app copied successfully."
+    else
+        echo "Sightwell app could not be copied to the Applications folder."
+        exit 1
+    fi
+
+    ln -fs $APP/Contents/MacOS/sightwell $AGENT
+    if test -f $AGENT; then
+        echo "Sightwell command linked successfully."
+    else
+        echo "Sightwell could not create symlink to /usr/local/bin"
+        exit 1
+    fi
+
+    $AGENT service install || true
+    $AGENT service start || true
+
+    console_user=$(stat -f%Su /dev/console 2>/dev/null)
+    case "$console_user" in
+        ""|root|loginwindow|_mbsetupuser)
+            echo "No active GUI user session (console user: '${console_user:-none}'); skipping UI launch."
+            ;;
+        *)
+            uid=$(id -u "$console_user" 2>/dev/null)
+            if [ -z "$uid" ]; then
+                echo "Could not resolve uid for console user '$console_user'; skipping UI launch."
+            else
+                echo "Launching Sightwell UI as console user $console_user (uid $uid)."
+                if ! launchctl asuser "$uid" sudo -u "$console_user" -H open "$APP"; then
+                    echo "Failed to launch Sightwell UI; if autostart is enabled it will start at next login."
+                fi
+            fi
+            ;;
+    esac
+
+    echo "Finished Sightwell installation successfully"
+    exit 0 # all good
+} > "$LOG_FILE" 2>&1

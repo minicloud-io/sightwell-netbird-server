@@ -1,0 +1,80 @@
+#!/bin/sh
+# Sightwell fork: macOS package pre-install, adapted from
+# release_files/darwin_pkg/preinstall. Sightwell installs beside NetBird and
+# must never stop, quit or refuse to coexist with a NetBird install, so this
+# script only touches Sightwell's own UI (by bundle id and process name) and
+# Sightwell's own service. Upstream's "installed with Homebrew" refusal is
+# dropped: a Homebrew NetBird is a different product here.
+
+set -x
+
+LOG_DIR=/var/log/sightwell
+LOG_FILE=$LOG_DIR/client_pre_install.log
+AGENT=/usr/local/bin/sightwell
+UI_PROCESS=sightwell-ui
+UI_BUNDLE_ID=ai.sightwell.connectivity
+
+mkdir -p "$LOG_DIR"
+
+# wait_for_ui_exit polls for up to $1 seconds, returning 0 as soon as no UI
+# process is left and 1 if one is still running when the time is up.
+wait_for_ui_exit() {
+    waited=0
+    while [ "$waited" -lt "$1" ]; do
+        pgrep -x "$UI_PROCESS" > /dev/null 2>&1 || return 0
+        sleep 1
+        waited=$((waited + 1))
+    done
+    return 1
+}
+
+# request_ui_quit asks the UI to quit from inside the console user's session.
+# The installer runs as root outside that session, so a quit Apple event sent
+# straight from here always fails with -600.
+request_ui_quit() {
+    console_user=$(stat -f%Su /dev/console 2>/dev/null)
+    case "$console_user" in
+        ""|root|loginwindow|_mbsetupuser)
+            echo "No active GUI user session (console user: '${console_user:-none}'); skipping the quit request."
+            return 1
+            ;;
+    esac
+
+    uid=$(id -u "$console_user" 2>/dev/null)
+    if [ -z "$uid" ]; then
+        echo "Could not resolve uid for console user '$console_user'; skipping the quit request."
+        return 1
+    fi
+
+    echo "Asking the Sightwell UI to quit as console user $console_user (uid $uid)."
+    launchctl asuser "$uid" sudo -u "$console_user" -H osascript -e "quit app id \"$UI_BUNDLE_ID\"" || true
+}
+
+# quit_ui stops a running Sightwell UI so the app bundle can be replaced
+# underneath it.
+quit_ui() {
+    if request_ui_quit && wait_for_ui_exit 10; then
+        return 0
+    fi
+
+    pgrep -x "$UI_PROCESS" > /dev/null 2>&1 || return 0
+
+    echo "Sightwell UI still running; terminating it."
+    pkill -x "$UI_PROCESS" || true
+    if wait_for_ui_exit 3; then
+        return 0
+    fi
+
+    echo "Sightwell UI ignored SIGTERM; killing it."
+    pkill -KILL -x "$UI_PROCESS" || true
+}
+
+{
+    quit_ui
+    if [ -x "$AGENT" ]; then
+        "$AGENT" service stop || true
+    fi
+
+    echo "Preinstall complete"
+    exit 0 # all good
+} > "$LOG_FILE" 2>&1
