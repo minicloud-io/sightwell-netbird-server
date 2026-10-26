@@ -76,6 +76,10 @@ Remove with `sudo /Applications/Sightwell.app/Contents/Resources/uninstall.sh`
   `network_range` (account settings API, `parseAndValidateNetworkRange`).
   Set Sightwell accounts to a fixed private range outside 100.64.0.0/10
   that the customer's LANs don't use; pick it per deployment.
+  Both clients signed in to the same account always share its range, so
+  that combination can't carry traffic on both tunnels; on the development
+  Mac (2026-10-26, both on SAWGRASS-LNG) Sightwell reached management and
+  signal, but `100.69/16` stayed on NetBird's `utun100`.
 - **DNS for everything.** Two clients that both route all DNS (a
   primary/catch-all nameserver) fight over the default resolver. Match
   domains coexist if they don't overlap; Sightwell's DNS domain must differ
