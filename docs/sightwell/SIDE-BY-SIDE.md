@@ -79,7 +79,11 @@ Remove with `sudo /Applications/Sightwell.app/Contents/Resources/uninstall.sh`
   Both clients signed in to the same account always share its range, so
   that combination can't carry traffic on both tunnels; on the development
   Mac (2026-10-26, both on SAWGRASS-LNG) Sightwell reached management and
-  signal, but `100.69/16` stayed on NetBird's `utun100`.
+  signal, but `100.69/16` stayed on NetBird's `utun100`. `netbird down` did
+  not free it: NetBird's daemon keeps `utun100` and the route while
+  disconnected, until `netbird service stop`. Sightwell then took the route
+  on `utun110` by itself (no reconnect needed) and completed WireGuard
+  handshakes with the routing peers over the relay.
 - **DNS for everything.** Two clients that both route all DNS (a
   primary/catch-all nameserver) fight over the default resolver. Match
   domains coexist if they don't overlap; Sightwell's DNS domain must differ
