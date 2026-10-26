@@ -16,17 +16,24 @@ build tasks stay unchanged):
 
 The status dots (netbird-menu-dot-*) are status colours, not brand, and stay.
 
-State language follows upstream: the mark with a cut-out badge in the corner.
-connected = check, connecting = three dots (macOS: the spinner instead), error / needs-login = cross,
-update = up arrow (plus check when connected), disconnected = no badge.
+Every tray reads the sight glass like a gauge instead of badges (the Sightwell
+design reference, sightwell.ai/brand/): the level at rest = disconnected, an
+empty glass = sign-in needed (nothing flows until you sign in), a tilted level
+= error or service not running (something is off). The only badge is the
+update arrow, top right, in signal orange.
 
-macOS menu bar (template icons) reads the sight glass like a gauge instead of
-badges: the level at rest = disconnected, an empty glass = sign-in needed
-(nothing flows until you sign in), a tilted level = error or service not
-running (something is off). Connected and connecting are the colour icon and
-the spinner. The connected and connecting templates keep their badges: they
-are never shown, but the app tells states apart by these bytes, so every macOS
-template must stay distinct (icons_sightwell_test.go).
+Windows (colour): connected = the mark with its orange level; connecting = the
+mark inside a signal-orange arc (one frame of the macOS spinner); the other
+states show a grey level, since orange liquid means traffic is flowing.
+
+Linux (mono, black or white by panel theme): no colour to tell connected from
+disconnected, so connected is a full glass; connecting is the level at rest
+inside an arc.
+
+macOS menu bar (template icons): connected and connecting are the colour icon
+and the spinner. The connected and connecting templates keep their badges:
+they are never shown, but the app tells states apart by these bytes, so every
+macOS template must stay distinct (icons_sightwell_test.go).
 
 Run from the repository root:  python3 client/ui/build/sightwell/icons.py
 Requires Pillow. Drawn at 4x and downsampled, so no SVG renderer is needed.
@@ -48,11 +55,6 @@ WHITE = (255, 255, 255, 255)
 ORANGE = (0xF0, 0x7A, 0x3A, 255)
 NEUTRAL = (0x8C, 0x91, 0x97, 255)
 CLEAR = (0, 0, 0, 0)
-
-# Status colours (not brand): light panel / dark panel.
-GREEN = {"light": (0x05, 0x7A, 0x55, 255), "dark": (0x31, 0xC4, 0x8D, 255)}
-RED = {"light": (0xC8, 0x1E, 0x1E, 255), "dark": (0xF0, 0x52, 0x52, 255)}
-BLUE = {"light": (0x0B, 0x6E, 0x99, 255), "dark": (0x38, 0xBD, 0xF8, 255)}
 
 SS = 4  # supersampling factor
 
@@ -139,44 +141,98 @@ MACOS_LEVEL = {
     "needs-login": {"drained": True},
 }
 
+# macOS templates that keep a badge. Connected and connecting are never shown
+# (colour icon, spinner) but must stay distinct; the update arrow is real.
 BADGES = {
-    "connected": [("check", "br", GREEN)],
-    "connecting": [("dots", "br", None)],
+    "connected": [("check", "br")],
+    "connecting": [("dots", "br")],
     "disconnected": [],
-    "error": [("cross", "br", RED)],
-    "needs-login": [("cross", "br", RED)],
-    "update-connected": [("arrow", "tr", BLUE), ("check", "br", GREEN)],
-    "update-disconnected": [("arrow", "br", BLUE)],
+    "error": [],
+    "needs-login": [],
+    "update-connected": [("arrow", "tr"), ("check", "br")],
+    "update-disconnected": [("arrow", "br")],
 }
 
 
 def tray(state, variant, size):
-    """variant: light | dark (colour), template (macOS, black+alpha), mono | mono-dark (Linux SNI)."""
-    S = size * SS
-    template = variant in ("template", "mono", "mono-dark")
-    solid = {"template": INK, "mono": INK, "mono-dark": WHITE}.get(variant)
-    gauge = MACOS_LEVEL.get(state) if variant == "template" else None
+    """variant: light | dark (colour, Windows), template (macOS, black+alpha), mono | mono-dark (Linux SNI)."""
+    if variant != "template":
+        return gauge_tray(state, variant, size)
+    gauge = MACOS_LEVEL.get(state)
     if gauge:
-        return mark(size, solid, None, solid, **gauge).resize((size, size), Image.LANCZOS)
-    if template:
-        img = mark(size, solid, None, solid)
-    elif variant == "light":
-        img = mark(size, INK, WHITE, ORANGE)
-    else:
-        img = mark(size, PAPER, GLASS_DARK, ORANGE)
+        return mark(size, INK, None, INK, **gauge).resize((size, size), Image.LANCZOS)
+    S = size * SS
+    img = mark(size, INK, None, INK)
     r = S * 0.19
     pos = {"br": (S * 0.79, S * 0.79), "tr": (S * 0.79, S * 0.21)}
-    for kind, where, colors in BADGES[state]:
+    for kind, where in BADGES[state]:
         bx, by = pos[where]
         knock(img, bx, by, r * 1.32)
-        if template:
-            color = solid
-        elif colors is None:
-            color = INK if variant == "light" else WHITE
-        else:
-            color = colors["light" if variant == "light" else "dark"]
-        glyph(img, kind, bx, by, r, color)
+        glyph(img, kind, bx, by, r, INK)
     return img.resize((size, size), Image.LANCZOS)
+
+
+# Windows and Linux: the level carries the state (see the module docstring).
+GAUGE_LEVEL = {
+    "connected": {},
+    "disconnected": {},
+    "needs-login": {"drained": True},
+    "error": {"tilt": 35},
+}
+
+
+def full_glass(size, solid):
+    """Single-colour mark with the glass filled (Linux mono, connected)."""
+    img = mark(size, solid, None, solid, drained=True)
+    S = size * SS
+    u = S / 120.0
+    circle(ImageDraw.Draw(img), S / 2, S / 2, (33.4 - 5.5) * u, solid)
+    return img
+
+
+def mono_connecting(size, solid):
+    """Single-colour connecting icon: the level at rest inside an open arc."""
+    S = size * SS
+    u = S / 120.0
+    c = S / 2
+    img = Image.new("RGBA", (S, S), CLEAR)
+    r, w = 53 * u, 10 * u
+    ImageDraw.Draw(img).arc((c - r, c - r, c + r, c + r), -60, 210, fill=solid, width=int(w))
+    img.alpha_composite(mark(size, solid, None, solid, scale=0.62))
+    return img
+
+
+def gauge_tray(state, variant, size):
+    """Windows (light | dark) and Linux (mono | mono-dark) tray icons, no badges
+    except the update arrow."""
+    update = state.startswith("update-")
+    base = state[len("update-"):] if update else state
+    colour = variant in ("light", "dark")
+    solid = None if colour else {"mono": INK, "mono-dark": WHITE}[variant]
+    if base == "connecting":
+        if colour:
+            img = menubar_spinner(size, 1).resize((size * SS, size * SS), Image.LANCZOS)
+        else:
+            img = mono_connecting(size, solid)
+    elif colour:
+        ring, glass = (INK, WHITE) if variant == "light" else (PAPER, GLASS_DARK)
+        level = ORANGE if base == "connected" else NEUTRAL
+        img = mark(size, ring, glass, level, **GAUGE_LEVEL[base])
+    elif base == "connected":
+        img = full_glass(size, solid)
+    else:
+        img = mark(size, solid, None, solid, **GAUGE_LEVEL[base])
+    if update:
+        S = size * SS
+        r = S * 0.19
+        bx, by = S * 0.79, S * 0.21
+        knock(img, bx, by, r * 1.32)
+        glyph(img, "arrow", bx, by, r, ORANGE if colour else solid)
+    return img.resize((size, size), Image.LANCZOS)
+
+
+# Windows dark-taskbar variants that upstream lacks (it reused the light icon).
+NEW_DARK = ("disconnected", "needs-login")
 
 
 def save_tray():
@@ -184,7 +240,7 @@ def save_tray():
     for state in BADGES:
         base = os.path.join(ASSETS, f"netbird-systemtray-{state}")
         jobs = [("", "light", 256), ("-macos", "template", 366), ("-mono", "mono", 48), ("-mono-dark", "mono-dark", 48)]
-        if os.path.exists(base + "-dark.png"):
+        if os.path.exists(base + "-dark.png") or state in NEW_DARK:
             jobs.append(("-dark", "dark", 256))
         for suffix, variant, size in jobs:
             path = f"{base}{suffix}.png"

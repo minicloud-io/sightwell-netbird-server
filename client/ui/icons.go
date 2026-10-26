@@ -15,6 +15,11 @@ var iconConnectedDark []byte
 //go:embed assets/netbird-systemtray-disconnected.png
 var iconDisconnected []byte
 
+// Sightwell fork: dark-taskbar variant (upstream reused the light icon).
+//
+//go:embed assets/netbird-systemtray-disconnected-dark.png
+var iconDisconnectedDark []byte
+
 //go:embed assets/netbird-systemtray-connecting.png
 var iconConnecting []byte
 
@@ -29,6 +34,11 @@ var iconErrorDark []byte
 
 //go:embed assets/netbird-systemtray-needs-login.png
 var iconNeedsLogin []byte
+
+// Sightwell fork: dark-taskbar variant (upstream reused the light icon).
+//
+//go:embed assets/netbird-systemtray-needs-login-dark.png
+var iconNeedsLoginDark []byte
 
 //go:embed assets/netbird-systemtray-update-connected.png
 var iconUpdateConnected []byte

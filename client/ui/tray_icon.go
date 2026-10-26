@@ -135,7 +135,7 @@ func (t *Tray) iconForState() (icon, dark []byte) {
 	case errored:
 		return iconError, iconErrorDark
 	case needsLogin:
-		return iconNeedsLogin, iconNeedsLogin
+		return iconNeedsLogin, iconNeedsLoginDark
 	case connected && hasUpdate:
 		return iconUpdateConnected, iconUpdateConnectedDark
 	case connected:
@@ -143,6 +143,6 @@ func (t *Tray) iconForState() (icon, dark []byte) {
 	case hasUpdate:
 		return iconUpdateDisconnected, iconUpdateDisconnectedDark
 	default:
-		return iconDisconnected, iconDisconnected
+		return iconDisconnected, iconDisconnectedDark
 	}
 }
