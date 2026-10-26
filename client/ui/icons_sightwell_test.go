@@ -51,6 +51,20 @@ func TestGaugeTrayIconsDistinct(t *testing.T) {
 	})
 }
 
+// Windows dark taskbars get their own icon for every state (light ring, dark
+// glass); none may fall back to the light-taskbar bytes.
+func TestWindowsDarkIconsOwnBytes(t *testing.T) {
+	pairs := map[string][2][]byte{
+		"connected": {iconConnected, iconConnectedDark}, "disconnected": {iconDisconnected, iconDisconnectedDark},
+		"connecting": {iconConnecting, iconConnectingDark}, "error": {iconError, iconErrorDark},
+		"needs-login":      {iconNeedsLogin, iconNeedsLoginDark},
+		"update-connected": {iconUpdateConnected, iconUpdateConnectedDark}, "update-disconnected": {iconUpdateDisconnected, iconUpdateDisconnectedDark},
+	}
+	for name, p := range pairs {
+		assert.NotEqual(t, p[0], p[1], "Windows %s: dark icon equals the light one", name)
+	}
+}
+
 func assertDistinct(t *testing.T, set string, icons map[string][]byte) {
 	t.Helper()
 	seen := map[string]string{}

@@ -211,7 +211,7 @@ def gauge_tray(state, variant, size):
     solid = None if colour else {"mono": INK, "mono-dark": WHITE}[variant]
     if base == "connecting":
         if colour:
-            img = menubar_spinner(size, 1).resize((size * SS, size * SS), Image.LANCZOS)
+            img = menubar_spinner(size, 1, dark=variant == "dark").resize((size * SS, size * SS), Image.LANCZOS)
         else:
             img = mono_connecting(size, solid)
     elif colour:
@@ -281,10 +281,12 @@ SPINNER_FRAMES = 12
 SPINNER_SIZE = 176
 
 
-def menubar_spinner(size, step, steps=SPINNER_FRAMES):
+def menubar_spinner(size, step, steps=SPINNER_FRAMES, dark=False):
     """One frame of the macOS connecting spinner (colour, like the connected
     icon): the mark with its paper rim at 0.66 scale, a neutral track at the
-    edge, and a 270 degree signal-orange arc rotated by step/steps of a turn."""
+    edge, and a 270 degree signal-orange arc rotated by step/steps of a turn.
+    dark (Windows dark taskbar): the dark-ground mark, light ring and dark
+    glass, without the rim, like the other -dark tray icons."""
     S = size * SS
     u = S / 120.0
     c = S / 2
@@ -301,8 +303,11 @@ def menubar_spinner(size, step, steps=SPINNER_FRAMES):
         t = math.radians(a)
         circle(d, c + (r - w / 2) * math.cos(t), c + (r - w / 2) * math.sin(t), w / 2, ORANGE)
     scale = 0.66
-    circle(d, c, c, (56 * scale + 5) * u, PAPER)
-    img.alpha_composite(mark(size, INK, WHITE, ORANGE, scale=scale))
+    if dark:
+        img.alpha_composite(mark(size, PAPER, GLASS_DARK, ORANGE, scale=scale))
+    else:
+        circle(d, c, c, (56 * scale + 5) * u, PAPER)
+        img.alpha_composite(mark(size, INK, WHITE, ORANGE, scale=scale))
     return img.resize((size, size), Image.LANCZOS)
 
 
