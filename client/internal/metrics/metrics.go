@@ -228,8 +228,8 @@ func (c *ClientMetrics) StopPush() {
 
 // UpdatePushFromMgm updates metrics push based on management server configuration.
 // If NB_METRICS_PUSH_ENABLED is explicitly set (true or false), management config is ignored.
-// When unset, management controls whether push is enabled.
-func (c *ClientMetrics) UpdatePushFromMgm(ctx context.Context, enabled bool) {
+// When unset, management can only stop push, never start it.
+func (c *ClientMetrics) UpdatePushFromMgm(_ context.Context, enabled bool) {
 	if c == nil {
 		return
 	}
@@ -239,22 +239,22 @@ func (c *ClientMetrics) UpdatePushFromMgm(ctx context.Context, enabled bool) {
 		return
 	}
 
+	// Sightwell fork: the management server can't turn push on. The default
+	// target is NetBird's ingest.netbird.io, so push runs only when the device
+	// opts in locally with NB_METRICS_PUSH_ENABLED=true.
+	if enabled {
+		log.Debugf("ignoring metrics push enabled by management; set %s=true to opt in", EnvMetricsPushEnabled)
+		return
+	}
+
 	c.pushMu.Lock()
 	defer c.pushMu.Unlock()
 
-	if enabled {
-		if c.push.Load() != nil {
-			return
-		}
-		log.Infof("enabled metrics push by management")
-		c.startPushLocked(ctx, PushConfigFromEnv())
-	} else {
-		if c.push.Load() == nil {
-			return
-		}
-		log.Infof("disabled metrics push by management")
-		c.stopPushLocked()
+	if c.push.Load() == nil {
+		return
 	}
+	log.Infof("disabled metrics push by management")
+	c.stopPushLocked()
 }
 
 // startPushLocked starts push. Caller must hold pushMu.
