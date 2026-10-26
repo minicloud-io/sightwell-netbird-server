@@ -1,5 +1,5 @@
 {
-  "_comment": "Sightwell fork: product-name branding applied by the Go bundle (i18n/brand.go) and the React loader (frontend/src/lib/i18n.ts). Only keys where 'NetBird' names this app are listed; technology names stay.",
+  "_comment": "Sightwell fork: product-name branding applied by the Go bundle (i18n/brand.go) and the React loader (frontend/src/lib/i18n.ts). Only keys where 'NetBird' names this app or its own background service (the 'sightwell' service, installed beside NetBird's) are listed; technology names stay.",
   "appName": "Sightwell",
   "productName": "Sightwell Connectivity",
   "replace": [
@@ -52,7 +52,13 @@
     "welcome.management.title",
     "welcome.title",
     "welcome.titleMac",
-    "window.title.welcome"
+    "window.title.welcome",
+    "daemon.unavailable.title",
+    "daemon.outdated.title",
+    "daemon.outdated.description",
+    "notify.daemonOutdated.title",
+    "notify.daemonOutdated.body",
+    "error.daemon_unreachable"
   ],
   "features": {
     "netbirdCloud": false

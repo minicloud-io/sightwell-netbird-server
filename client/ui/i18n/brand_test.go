@@ -33,7 +33,11 @@ func TestBrandMessage(t *testing.T) {
 	assert.Equal(t, "Sightwell Connectivity v{version}", brandMessage("settings.about.client", "NetBird Client v{version}"))
 	// Technology references are left alone.
 	assert.Equal(t, "NetBird IP", brandMessage("peers.details.netbirdIp", "NetBird IP"))
-	assert.Equal(t, "NetBird Service Is Not Running", brandMessage("daemon.unavailable.title", "NetBird Service Is Not Running"))
+	// The background service is Sightwell's own (installed beside NetBird's).
+	assert.Equal(t, "Sightwell Service Is Not Running", brandMessage("daemon.unavailable.title", "NetBird Service Is Not Running"))
+	assert.Equal(t, "The Sightwell daemon is not responding. Please check that the service is running.",
+		brandMessage("error.daemon_unreachable", "The NetBird daemon is not responding. Please check that the service is running."))
+	assert.Equal(t, "Sightwell Connectivity Is Outdated", brandMessage("daemon.outdated.title", "NetBird Client Is Outdated"))
 }
 
 // Branding applies to every shipped locale, through the real loader.
@@ -132,4 +136,8 @@ func TestLegalLinks(t *testing.T) {
 		u, err := url.Parse(l.URL)
 		assert.True(t, err == nil && u.Scheme == "https" && u.Host != "", "legal link %q: %q is not an https URL", l.Key, l.URL)
 	}
+}
+
+func TestDocsURL(t *testing.T) {
+	assert.Equal(t, "https://sightwell.ai/connectivity", DocsURL)
 }

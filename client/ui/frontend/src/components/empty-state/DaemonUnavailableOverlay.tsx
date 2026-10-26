@@ -3,8 +3,10 @@ import { AlertCircleIcon, BookText } from "lucide-react";
 import { Browser } from "@wailsio/runtime";
 import { Button } from "@/components/buttons/Button";
 import { useStatus } from "@/contexts/StatusContext.tsx";
+// Sightwell fork: documentation link from i18n/brand.json (links.documentation).
+import brand from "../../../../i18n/brand.json";
 
-const DOCS_URL = "https://docs.netbird.io/how-to/installation";
+const DOCS_URL = brand.links.documentation;
 
 function openUrl(url: string) {
     Browser.OpenURL(url).catch(() => globalThis.open(url, "_blank"));

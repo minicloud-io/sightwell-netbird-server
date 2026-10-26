@@ -32,9 +32,6 @@ const (
 	statusError = "Error"
 
 	quitDownTimeout = 5 * time.Second
-
-	urlGitHubRepo = "https://github.com/netbirdio/netbird"
-	urlDocs       = "https://docs.netbird.io"
 )
 
 // TrayServices bundles the services the tray menu needs, grouped so NewTray
@@ -467,11 +464,10 @@ func (t *Tray) buildMenu() *application.Menu {
 
 	aboutLabel := menuLabel(t.loc.T("tray.menu.about"))
 	about := menu.AddSubmenu(aboutLabel)
-	about.Add(t.loc.T("tray.menu.github")).OnClick(func(*application.Context) {
-		_ = t.app.Browser.OpenURL(urlGitHubRepo)
-	})
+	// Sightwell fork: our documentation; NetBird's GitHub link is not shown
+	// (as on the About page).
 	about.Add(t.loc.T("tray.menu.documentation")).OnClick(func(*application.Context) {
-		_ = t.app.Browser.OpenURL(urlDocs)
+		_ = t.app.Browser.OpenURL(i18n.DocsURL)
 	})
 	about.Add(t.loc.T("tray.menu.troubleshoot")).OnClick(func(*application.Context) {
 		t.svc.WindowManager.OpenSettings("troubleshooting")

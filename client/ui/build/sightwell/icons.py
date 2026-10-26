@@ -20,6 +20,14 @@ State language follows upstream: the mark with a cut-out badge in the corner.
 connected = check, connecting = three dots (macOS: the spinner instead), error / needs-login = cross,
 update = up arrow (plus check when connected), disconnected = no badge.
 
+macOS menu bar (template icons) reads the sight glass like a gauge instead of
+badges: the level at rest = disconnected, an empty glass = sign-in needed
+(nothing flows until you sign in), a tilted level = error or service not
+running (something is off). Connected and connecting are the colour icon and
+the spinner. The connected and connecting templates keep their badges: they
+are never shown, but the app tells states apart by these bytes, so every macOS
+template must stay distinct (icons_sightwell_test.go).
+
 Run from the repository root:  python3 client/ui/build/sightwell/icons.py
 Requires Pillow. Drawn at 4x and downsampled, so no SVG renderer is needed.
 """
@@ -53,9 +61,11 @@ def circle(d, cx, cy, r, fill):
     d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=fill)
 
 
-def mark(size, ring, glass, horizon, bolts=False, highlight=None, scale=1.0, offset=(0, 0)):
+def mark(size, ring, glass, horizon, bolts=False, highlight=None, scale=1.0, offset=(0, 0), tilt=0, drained=False):
     """The sight-glass mark on a transparent canvas, geometry from sightwell-mark.svg
-    (120-unit box). glass=None punches the glass out (template icons)."""
+    (120-unit box). glass=None punches the glass out (template icons).
+    tilt turns the level (degrees, positive = higher on the left); drained
+    leaves the glass empty."""
     S = size * SS
     u = S / 120.0 * scale
     ox, oy = offset[0] * SS, offset[1] * SS
@@ -79,7 +89,10 @@ def mark(size, ring, glass, horizon, bolts=False, highlight=None, scale=1.0, off
     horizon_clip = Image.new("L", (S, S), 0)
     circle(ImageDraw.Draw(horizon_clip), cx, cy, r_glass - gap, 255)
     horizon_mask = Image.new("L", (S, S), 0)
-    ImageDraw.Draw(horizon_mask).rectangle((0, cy + 6 * u + gap * 0.4, S, S), fill=255)
+    level = cy + 6 * u + gap * 0.4
+    rise = math.tan(math.radians(tilt)) * S / 2
+    if not drained:
+        ImageDraw.Draw(horizon_mask).polygon([(0, level - rise), (S, level + rise), (S, S), (0, S)], fill=255)
     hm = Image.new("L", (S, S), 0)
     hm.paste(horizon_mask, (0, 0), horizon_clip)
     img.paste(horizon, (0, 0), hm)
@@ -120,6 +133,12 @@ def glyph(img, kind, cx, cy, r, color):
         d.polygon([(cx - r * 0.75, cy - r * 0.05), (cx + r * 0.75, cy - r * 0.05), (cx, cy - r * 0.95)], fill=color)
 
 
+# macOS template icons: the level carries the state instead of a badge.
+MACOS_LEVEL = {
+    "error": {"tilt": 35},
+    "needs-login": {"drained": True},
+}
+
 BADGES = {
     "connected": [("check", "br", GREEN)],
     "connecting": [("dots", "br", None)],
@@ -136,6 +155,9 @@ def tray(state, variant, size):
     S = size * SS
     template = variant in ("template", "mono", "mono-dark")
     solid = {"template": INK, "mono": INK, "mono-dark": WHITE}.get(variant)
+    gauge = MACOS_LEVEL.get(state) if variant == "template" else None
+    if gauge:
+        return mark(size, solid, None, solid, **gauge).resize((size, size), Image.LANCZOS)
     if template:
         img = mark(size, solid, None, solid)
     elif variant == "light":

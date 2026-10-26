@@ -16,10 +16,10 @@ import (
 // locale files stay upstream's: they change with every NetBird release and
 // would otherwise conflict on each sync.
 //
-// Only keys where "NetBird" names *this app* are listed. Where it names the
-// technology underneath (the NetBird service/daemon, NetBird IP, NetBird
-// Cloud, NetBird servers and support, setup keys) the text stays as it is, so it
-// remains true. The copyright line is replaced through messages with the
+// Only keys where "NetBird" names *this app* or its own background service
+// (the "sightwell" service, installed beside NetBird's) are listed. Where it
+// names the technology underneath (NetBird IP, NetBird Cloud, NetBird servers
+// and support, setup keys) the text stays as it is, so it remains true. The copyright line is replaced through messages with the
 // BSD-3-Clause notice of the NetBird code underneath.
 
 //go:embed brand.json
@@ -30,7 +30,10 @@ type brandConfig struct {
 	ProductName string      `json:"productName"`
 	Replace     [][2]string `json:"replace"`
 	Keys        []string    `json:"keys"`
-	Features    struct {
+	Links       struct {
+		Documentation string `json:"documentation"`
+	} `json:"links"`
+	Features struct {
 		NetBirdCloud bool `json:"netbirdCloud"`
 	} `json:"features"`
 	// SelfHostedMessages replace keys that offer NetBird Cloud, per locale,
@@ -45,6 +48,8 @@ var (
 	AppName string
 	// ProductName is the full product name used on the About page.
 	ProductName string
+	// DocsURL is the documentation link (tray menu, About page).
+	DocsURL string
 
 	brandedKeys   map[string]bool
 	brandReplacer *strings.Replacer
@@ -58,7 +63,7 @@ func init() {
 	if err := json.Unmarshal(brandJSON, &c); err != nil {
 		panic("i18n: invalid brand.json: " + err.Error())
 	}
-	AppName, ProductName = c.AppName, c.ProductName
+	AppName, ProductName, DocsURL = c.AppName, c.ProductName, c.Links.Documentation
 	brandedKeys = make(map[string]bool, len(c.Keys))
 	for _, k := range c.Keys {
 		brandedKeys[k] = true
