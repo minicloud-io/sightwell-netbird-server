@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/netbirdio/netbird/client/internal/debug"
-	"github.com/netbirdio/netbird/upload-server/types"
 )
 
 const (
@@ -29,8 +28,10 @@ func NewExecutor() *Executor {
 }
 
 func (e *Executor) BundleJob(ctx context.Context, debugBundleDependencies debug.GeneratorDependencies, params debug.BundleConfig, waitForDuration time.Duration, mgmURL, uploadURL string) (string, error) {
+	// Sightwell fork: there is no default upload service, so a job without a
+	// management or MDM upload URL fails before generating a bundle.
 	if uploadURL == "" {
-		uploadURL = types.DefaultBundleURL
+		return "", debug.ErrNoUploadService
 	}
 
 	if waitForDuration > MaxBundleWaitTime {

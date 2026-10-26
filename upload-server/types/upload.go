@@ -8,7 +8,10 @@ const (
 	// GetURLPath is the path for the GetURL request
 	GetURLPath = "/upload-url"
 
-	DefaultBundleURL = "https://upload.debug.netbird.io" + GetURLPath
+	// DefaultBundleURL is empty in the Sightwell fork: debug bundles never go to
+	// NetBird's upload service (upload.debug.netbird.io). An upload needs an
+	// explicit URL from the CLI flag, MDM or the management server.
+	DefaultBundleURL = ""
 )
 
 // GetURLResponse is the response for the GetURL request

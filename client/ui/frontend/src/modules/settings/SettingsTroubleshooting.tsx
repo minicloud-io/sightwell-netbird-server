@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import {
+    BookText,
     CircleCheckBig,
     FolderOpen,
     Info,
@@ -28,8 +29,11 @@ import { formatRemaining } from "@/lib/formatters";
 import type { AnonymizeLevel, DebugStage } from "@/contexts/DebugBundleContext";
 import { useDebugBundleContext } from "@/contexts/DebugBundleContext";
 import { SectionGroup, SettingsBottomBar } from "@/modules/settings/SettingsSection.tsx";
+// Sightwell fork: bundles are saved locally only (no upload to NetBird's
+// service); the done screen links our troubleshooting docs (i18n/brand.json).
+import brand from "../../../../i18n/brand.json";
 
-const SUPPORT_DOCS_URL = "https://docs.netbird.io/help/report-bug-issues";
+const TROUBLESHOOTING_DOCS_URL = brand.links.troubleshooting;
 
 const ANONYMIZE_LEVELS: { value: AnonymizeLevel; icon: LucideIcon }[] = [
     { value: "none", icon: ShieldOff },
@@ -45,8 +49,6 @@ export function SettingsTroubleshooting() {
         setAnonymizeLevel,
         systemInfo,
         setSystemInfo,
-        upload,
-        setUpload,
         trace,
         setTrace,
         capture,
@@ -62,9 +64,7 @@ export function SettingsTroubleshooting() {
     } = useDebugBundleContext();
 
     if (stage.kind === "done") {
-        return (
-            <DoneResult result={stage.result} uploaded={stage.uploadAttempted} onClose={reset} />
-        );
+        return <DoneResult result={stage.result} onClose={reset} />;
     }
     if (stage.kind !== "idle") {
         return <ProgressSection stage={stage} onCancel={cancel} />;
@@ -114,12 +114,6 @@ export function SettingsTroubleshooting() {
                 onChange={setSystemInfo}
                 label={t("settings.troubleshooting.systemInfo.label")}
                 helpText={t("settings.troubleshooting.systemInfo.help")}
-            />
-            <FancyToggleSwitch
-                value={upload}
-                onChange={setUpload}
-                label={t("settings.troubleshooting.upload.label")}
-                helpText={t("settings.troubleshooting.upload.help")}
             />
             <FancyToggleSwitch
                 value={trace}
@@ -239,20 +233,21 @@ function ProgressSection({
 
 function DoneResult({
     result,
-    uploaded,
     onClose,
 }: Readonly<{
     result: DebugBundleResult;
-    uploaded: boolean;
     onClose: () => void;
 }>) {
     const { t } = useTranslation();
-    const showKey = uploaded && Boolean(result.uploadedKey);
-    const uploadFailed = uploaded && !result.uploadedKey;
     const onRevealPath = () => {
         if (!result.path) return;
         DebugSvc.RevealFile(result.path).catch((err: unknown) =>
             console.error("reveal debug bundle file", err),
+        );
+    };
+    const onOpenDocs = () => {
+        Browser.OpenURL(TROUBLESHOOTING_DOCS_URL).catch(() =>
+            globalThis.open(TROUBLESHOOTING_DOCS_URL, "_blank"),
         );
     };
     return (
@@ -264,43 +259,15 @@ function DoneResult({
 
             <div className={"flex max-w-sm flex-col items-center gap-2"}>
                 <DialogHeading className={"text-balance"}>
-                    {showKey
-                        ? t("settings.troubleshooting.done.uploadedTitle")
-                        : t("settings.troubleshooting.done.savedTitle")}
+                    {t("settings.troubleshooting.done.savedTitle")}
                 </DialogHeading>
                 <DialogDescription>
-                    {showKey ? (
-                        <Trans
-                            i18nKey={"settings.troubleshooting.done.uploadedDescription"}
-                            components={{
-                                docs: (
-                                    <a
-                                        href={SUPPORT_DOCS_URL}
-                                        aria-label={t("settings.about.community.documentation")}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            Browser.OpenURL(SUPPORT_DOCS_URL).catch(() =>
-                                                globalThis.open(SUPPORT_DOCS_URL, "_blank"),
-                                            );
-                                        }}
-                                        className={"text-netbird hover:underline"}
-                                    >
-                                        {/* content is provided by <Trans> */}
-                                        <span />
-                                    </a>
-                                ),
-                            }}
-                        />
-                    ) : (
-                        t("settings.troubleshooting.done.savedDescription")
-                    )}
+                    {t("settings.troubleshooting.done.savedDescription")}
                 </DialogDescription>
             </div>
 
-            <div className={"flex w-full max-w-sm flex-col gap-3"}>
-                {showKey && <Input dir={"ltr"} value={result.uploadedKey} readOnly copy />}
-
-                {result.path && !showKey && (
+            {result.path && (
+                <div className={"flex w-full max-w-sm flex-col gap-3"}>
                     <Input
                         dir={"ltr"}
                         value={result.path}
@@ -319,49 +286,26 @@ function DoneResult({
                             </button>
                         }
                     />
-                )}
-
-                {uploadFailed && (
-                    <div
-                        role={"alert"}
-                        className={
-                            "rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-300"
-                        }
-                    >
-                        {result.uploadFailureReason
-                            ? t("settings.troubleshooting.uploadFailedWithReason", {
-                                  reason: result.uploadFailureReason,
-                              })
-                            : t("settings.troubleshooting.uploadFailed")}
-                    </div>
-                )}
-            </div>
+                </div>
+            )}
 
             <DialogActions className={"max-w-[220px]"}>
-                {showKey ? (
+                {result.path && (
                     <Button
                         autoFocus
                         variant={"primary"}
                         size={"md"}
                         className={"w-full"}
-                        copy={result.uploadedKey}
+                        onClick={onRevealPath}
                     >
-                        {t("settings.troubleshooting.done.copyKey")}
+                        <FolderOpen size={14} aria-hidden={"true"} />
+                        {t("settings.troubleshooting.done.openFolder")}
                     </Button>
-                ) : (
-                    result.path && (
-                        <Button
-                            autoFocus
-                            variant={"primary"}
-                            size={"md"}
-                            className={"w-full"}
-                            onClick={onRevealPath}
-                        >
-                            <FolderOpen size={14} aria-hidden={"true"} />
-                            {t("settings.troubleshooting.done.openFolder")}
-                        </Button>
-                    )
                 )}
+                <Button variant={"secondary"} size={"md"} className={"w-full"} onClick={onOpenDocs}>
+                    <BookText size={14} aria-hidden={"true"} />
+                    {t("settings.about.community.documentation")}
+                </Button>
                 <Button variant={"secondary"} size={"md"} className={"w-full"} onClick={onClose}>
                     {t("common.close")}
                 </Button>
@@ -381,8 +325,6 @@ const stageLabel = (
             return t("settings.troubleshooting.stage.capturing");
         case "bundling":
             return t("settings.troubleshooting.stage.bundling");
-        case "uploading":
-            return t("settings.troubleshooting.stage.uploading");
         case "cancelling":
             return t("settings.troubleshooting.stage.cancelling");
         default:

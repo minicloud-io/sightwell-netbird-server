@@ -5,7 +5,6 @@ import i18next from "@/lib/i18n";
 import { errorDialog, formatErrorMessage } from "@/lib/errors.ts";
 import { startConnection } from "@/lib/connection.ts";
 
-const NETBIRD_UPLOAD_URL = "https://upload.debug.netbird.io/upload-url";
 const TRACE_LOG_FILE_COUNT = 5;
 const PLAIN_LOG_FILE_COUNT = 1;
 const TRACE_LOG_LEVEL = "trace";
@@ -18,9 +17,8 @@ export type DebugStage =
     | { kind: "capturing"; remainingSec: number; totalSec: number }
     | { kind: "restoring-level" }
     | { kind: "bundling" }
-    | { kind: "uploading" }
     | { kind: "cancelling" }
-    | { kind: "done"; result: DebugBundleResult; uploadAttempted: boolean };
+    | { kind: "done"; result: DebugBundleResult };
 
 const sleep = (ms: number, signal: AbortSignal) =>
     new Promise<void>((resolve, reject) => {
@@ -70,7 +68,6 @@ type BundleOptions = {
     capturePackets: boolean;
     hasWindow: boolean;
     totalSec: number;
-    uploadUrl: string;
     anonymizeLevel: AnonymizeLevel;
     systemInfo: boolean;
 };
@@ -187,25 +184,25 @@ const runBundleFlow = async (
     setStage({ kind: "bundling" });
     const logFileCount = opts.trace ? TRACE_LOG_FILE_COUNT : PLAIN_LOG_FILE_COUNT;
 
-    if (opts.uploadUrl) setStage({ kind: "uploading" });
     const result = await DebugSvc.Bundle({
         anonymize: opts.anonymizeLevel !== "none",
         // The daemon only knows "default" and "strict"; "none" is expressed
         // through the anonymize flag being off.
         anonymizeLevel: opts.anonymizeLevel === "strict" ? "strict" : "default",
         systemInfo: opts.systemInfo,
-        uploadUrl: opts.uploadUrl,
+        // Sightwell fork: bundles are saved locally only, never uploaded to
+        // NetBird's upload service.
+        uploadUrl: "",
         logFileCount,
     });
     throwIfAborted(signal);
     if (result.path) setLastBundlePath(result.path);
-    setStage({ kind: "done", result, uploadAttempted: Boolean(opts.uploadUrl) });
+    setStage({ kind: "done", result });
 };
 
 const useDebugBundle = () => {
     const [anonymizeLevel, setAnonymizeLevel] = useState<AnonymizeLevel>("none");
     const [systemInfo, setSystemInfo] = useState(true);
-    const [upload, setUpload] = useState(true);
     const [trace, setTrace] = useState(true);
     const [capture, setCapture] = useState(false);
     const [traceMinutes, setTraceMinutes] = useState(1);
@@ -244,7 +241,6 @@ const useDebugBundle = () => {
             capturePackets,
             hasWindow: capture && totalSec > 0,
             totalSec,
-            uploadUrl: upload ? NETBIRD_UPLOAD_URL : "",
             anonymizeLevel,
             systemInfo,
         };
@@ -281,8 +277,6 @@ const useDebugBundle = () => {
         setAnonymizeLevel,
         systemInfo,
         setSystemInfo,
-        upload,
-        setUpload,
         trace,
         setTrace,
         capture,

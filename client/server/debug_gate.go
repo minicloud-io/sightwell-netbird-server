@@ -42,9 +42,9 @@ func uiLogOpener(id ipcauth.Identity, identified bool) debug.LogOpener {
 // into both an exfiltration channel and a request forwarder that reaches
 // services only it can talk to.
 //
-// The upload service NetBird publishes is open to any caller, since that is what
-// the CLI and the desktop UI use. Any other endpoint, self-hosted upload servers
-// included, requires a privileged caller. Plaintext is refused for everyone: the
+// Upstream leaves the upload service NetBird publishes open to any caller.
+// Sightwell fork: types.DefaultBundleURL is empty, so no host is open and every
+// endpoint, self-hosted upload servers included, requires a privileged caller. Plaintext is refused for everyone: the
 // daemon fetches the URL and then PUTs the bundle to whatever that fetch returns,
 // so an http hop is a place to intercept the bundle or the redirect.
 //
@@ -87,8 +87,8 @@ func requirePrivilegeForUploadURL(ctx context.Context, rawURL string, insecure b
 		ipcauth.ElevatedCommand("netbird debug bundle -U --upload-bundle-url <url>"))
 }
 
-// isDefaultUploadService reports whether the URL points at the upload service
-// NetBird runs. Only the host is compared: the service's path may differ between
+// isDefaultUploadService reports whether the URL points at the default upload
+// service (none in the Sightwell fork, so it is always false). Only the host is compared: the service's path may differ between
 // releases, and the host is what decides who receives the bundle.
 func isDefaultUploadService(parsed *url.URL) bool {
 	defaultURL, err := url.Parse(types.DefaultBundleURL)

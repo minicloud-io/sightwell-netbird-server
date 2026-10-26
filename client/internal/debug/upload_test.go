@@ -88,6 +88,14 @@ func TestRequireHTTPS(t *testing.T) {
 	require.Error(t, requireHTTPS("upload URL", "://malformed"))
 }
 
+// Sightwell fork: there is no default upload service, so an empty URL is
+// refused before any request is made.
+func TestUploadDebugBundleWithoutServiceURL(t *testing.T) {
+	require.Empty(t, types.DefaultBundleURL, "the fork must not default to NetBird's upload service")
+	_, err := UploadDebugBundle(context.Background(), "", "https://mgm.example", "unused.tar.gz", false)
+	require.ErrorIs(t, err, ErrNoUploadService)
+}
+
 func TestRejectInsecureRedirect(t *testing.T) {
 	httpsReq, err := http.NewRequest(http.MethodGet, "https://a.example/", nil)
 	require.NoError(t, err)

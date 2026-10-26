@@ -63,10 +63,11 @@
   "features": {
     "netbirdCloud": false
   },
-  "_linksComment": "About page links. GitHub, Forum and Feedback (NetBird's) are not shown; the client is BSD-3-Clause, so links are ours to choose. releases: Changelog and What's new (our fork's GitHub releases, same source as the update check in version/update.go).",
+  "_linksComment": "About page links. GitHub, Forum and Feedback (NetBird's) are not shown; the client is BSD-3-Clause, so links are ours to choose. releases: Changelog and What's new (our fork's GitHub releases, same source as the update check in version/update.go). troubleshooting: the Documentation button after a debug bundle is saved (Settings › Troubleshoot; bundles are never uploaded).",
   "links": {
     "slack": "https://sightwell.slack.com",
     "documentation": "https://sightwell.ai/connectivity",
+    "troubleshooting": "https://sightwell.ai/connectivity/troubleshooting#logs",
     "releases": "https://github.com/minicloud-io/sightwell-netbird-server/releases"
   },
   "_legalLinksComment": "About page legal row, in order: { \"key\": label (settings.about.links.<key>, already translated: imprint, privacy, cla, terms), \"url\": https URL }. Empty hides the row; empty until Sightwell has its own legal pages (upstream's netbird.io pages are not shown).",

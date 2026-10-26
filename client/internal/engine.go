@@ -1481,7 +1481,8 @@ func (e *Engine) handleBundle(params *mgmProto.BundleParameters) (*mgmProto.JobR
 
 	// Resolve the upload destination: an MDM override, when set, takes
 	// precedence over the management-supplied URL. Both are validated the same
-	// way; an empty result falls back to the default upload server downstream.
+	// way; an empty result is refused by the executor (Sightwell fork: there is
+	// no default upload server).
 	uploadURL := params.GetUploadUrl()
 	if override := e.config.ProfileConfig.DebugBundleUploadURL; override != "" {
 		log.Infof("using MDM debug bundle upload URL override instead of the management-supplied value")

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -64,7 +65,14 @@ func rejectInsecureRedirect(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
+// ErrNoUploadService is returned when no upload service URL is given. The
+// Sightwell fork has no default upload service (types.DefaultBundleURL is empty).
+var ErrNoUploadService = errors.New("no debug bundle upload service configured; the bundle was saved locally only")
+
 func UploadDebugBundle(ctx context.Context, url, managementURL, filePath string, insecure bool) (key string, err error) {
+	if url == "" {
+		return "", ErrNoUploadService
+	}
 	if !insecure {
 		if err := requireHTTPS("upload service URL", url); err != nil {
 			return "", err

@@ -87,7 +87,7 @@ func TestBrandLinks(t *testing.T) {
 	if err := json.Unmarshal(brandJSON, &cfg); err != nil {
 		t.Fatal(err)
 	}
-	for _, k := range []string{"slack", "documentation", "releases"} {
+	for _, k := range []string{"slack", "documentation", "releases", "troubleshooting"} {
 		u, err := url.Parse(cfg.Links[k])
 		if err != nil || u.Scheme != "https" || u.Host == "" {
 			t.Errorf("links.%s = %q, want an https URL", k, cfg.Links[k])

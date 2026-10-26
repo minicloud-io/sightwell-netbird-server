@@ -961,7 +961,8 @@ func (config *Config) applyMDMPolicy(policy *mdm.Policy) {
 }
 
 // ValidateBundleUploadURL sanity-checks a debug-bundle upload URL. An empty
-// value is accepted — the executor falls back to the default upload service. A
+// value is accepted here; the executor then refuses the job, since the
+// Sightwell fork has no default upload service. A
 // non-empty value must be a well-formed https URL with a host; a malformed
 // value or a plaintext scheme is rejected. It deliberately does not constrain
 // which host may receive the bundle. This is the single source of truth for the

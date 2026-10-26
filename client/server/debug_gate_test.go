@@ -13,7 +13,6 @@ import (
 
 	"github.com/netbirdio/netbird/client/internal/ipcauth"
 	"github.com/netbirdio/netbird/client/proto"
-	"github.com/netbirdio/netbird/upload-server/types"
 )
 
 func TestRegisterUILogRefusesUnidentifiedCaller(t *testing.T) {
@@ -116,8 +115,9 @@ func TestRequirePrivilegeForUploadURL(t *testing.T) {
 		rootAlso bool
 	}{
 		{name: "no upload", url: "", unprivOK: true},
-		{name: "default service", url: types.DefaultBundleURL, unprivOK: true},
-		{name: "default service, other path", url: "https://upload.debug.netbird.io/other", unprivOK: true},
+		// Sightwell fork: no default upload service, so NetBird's is like any other host.
+		{name: "netbird upload service", url: "https://upload.debug.netbird.io/upload-url", rootAlso: true},
+		{name: "netbird upload service, other path", url: "https://upload.debug.netbird.io/other", rootAlso: true},
 		{name: "loopback exfiltration endpoint", url: "https://127.0.0.1:8080/upload-url", rootAlso: true},
 		{name: "custom upload service", url: "https://attacker.example/upload-url", rootAlso: true},
 		{name: "plaintext default host", url: "http://upload.debug.netbird.io/upload-url", invalid: true},
@@ -126,7 +126,7 @@ func TestRequirePrivilegeForUploadURL(t *testing.T) {
 		// insecure relaxes transport security; privileged only, whatever the host.
 		{name: "insecure http custom", url: "http://selfhosted.local/upload-url", insecure: true, rootAlso: true},
 		{name: "insecure https custom", url: "https://selfhosted.local/upload-url", insecure: true, rootAlso: true},
-		{name: "insecure default host", url: types.DefaultBundleURL, insecure: true, rootAlso: true},
+		{name: "insecure netbird host", url: "https://upload.debug.netbird.io/upload-url", insecure: true, rootAlso: true},
 		// --insecure must not widen the URL to non-http(s) schemes or a hostless URL.
 		{name: "insecure file scheme", url: "file:///etc/shadow", insecure: true, invalid: true},
 		{name: "insecure hostless", url: "https:///upload-url", insecure: true, invalid: true},
