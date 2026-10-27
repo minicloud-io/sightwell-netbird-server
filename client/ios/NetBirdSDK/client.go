@@ -391,6 +391,27 @@ func (c *Client) GetStatusDetails() *StatusDetails {
 	return &StatusDetails{items: peerInfos, fqdn: fullStatus.LocalPeerState.FQDN, ip: fullStatus.LocalPeerState.IP, ipv6: fullStatus.LocalPeerState.IPv6}
 }
 
+// SessionExpiresAt returns the SSO session deadline the management server
+// published for this peer, as Unix seconds. It returns 0 when no deadline is
+// tracked (login expiration off, or the peer did not sign in with SSO) and
+// when the client is not running, so the app never shows a deadline left over
+// from an earlier run. A deadline in the past is returned as-is; the app
+// decides how to show it. It reads the in-memory status recorder only and
+// makes no network call.
+func (c *Client) SessionExpiresAt() int64 {
+	if c == nil || c.recorder == nil || !c.isRunning() {
+		return 0
+	}
+	return sessionExpiresAtUnix(c.recorder.GetSessionExpiresAt())
+}
+
+// isRunning reports whether a Run is in progress.
+func (c *Client) isRunning() bool {
+	c.stateMu.RLock()
+	defer c.stateMu.RUnlock()
+	return c.runDone != nil
+}
+
 // SetConnectionListener set the network connection listener
 func (c *Client) SetConnectionListener(listener ConnectionListener) {
 	if listener == nil {
