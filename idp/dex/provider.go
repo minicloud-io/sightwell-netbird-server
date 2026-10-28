@@ -112,6 +112,8 @@ func NewProvider(ctx context.Context, config *Config) (*Provider, error) {
 		return nil, fmt.Errorf("failed to create local signer: %w", err)
 	}
 
+	registerAssertionConnector(stor)
+
 	// Build Dex server config - use Dex's types directly
 	dexConfig := server.Config{
 		Issuer:                     issuer,
@@ -170,6 +172,8 @@ func NewProviderFromYAML(ctx context.Context, yamlConfig *YAMLConfig) (*Provider
 		stor.Close()
 		return nil, err
 	}
+
+	registerAssertionConnector(stor)
 
 	dexConfig := buildDexConfig(yamlConfig, stor, logger)
 	dexConfig.RefreshTokenPolicy, err = yamlConfig.GetRefreshTokenPolicy(logger)

@@ -572,6 +572,24 @@ func (e GroupMinimumIssued) Valid() bool {
 	}
 }
 
+// Defines values for IdentityProviderClientAuth.
+const (
+	IdentityProviderClientAuthFederated IdentityProviderClientAuth = "federated"
+	IdentityProviderClientAuthSecret    IdentityProviderClientAuth = "secret"
+)
+
+// Valid indicates whether the value is a known member of the IdentityProviderClientAuth enum.
+func (e IdentityProviderClientAuth) Valid() bool {
+	switch e {
+	case IdentityProviderClientAuthFederated:
+		return true
+	case IdentityProviderClientAuthSecret:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IdentityProviderType.
 const (
 	IdentityProviderTypeAdfs      IdentityProviderType = "adfs"
@@ -3400,6 +3418,9 @@ type HuntressMatchAttributes struct {
 
 // IdentityProvider defines model for IdentityProvider.
 type IdentityProvider struct {
+	// ClientAuth How the identity provider authenticates this server at its token endpoint. "secret" sends the client secret. "federated" sends a JWT signed with this server's own OIDC signing key, which the provider trusts through a federated identity credential bound to this server's issuer, so no client secret is stored. Only the entra type supports federated.
+	ClientAuth *IdentityProviderClientAuth `json:"client_auth,omitempty"`
+
 	// ClientId OAuth2 client ID
 	ClientId string `json:"client_id"`
 
@@ -3416,12 +3437,18 @@ type IdentityProvider struct {
 	Type IdentityProviderType `json:"type"`
 }
 
+// IdentityProviderClientAuth How the identity provider authenticates this server at its token endpoint. "secret" sends the client secret. "federated" sends a JWT signed with this server's own OIDC signing key, which the provider trusts through a federated identity credential bound to this server's issuer, so no client secret is stored. Only the entra type supports federated.
+type IdentityProviderClientAuth string
+
 // IdentityProviderRequest defines model for IdentityProviderRequest.
 type IdentityProviderRequest struct {
+	// ClientAuth How the identity provider authenticates this server at its token endpoint. "secret" sends the client secret. "federated" sends a JWT signed with this server's own OIDC signing key, which the provider trusts through a federated identity credential bound to this server's issuer, so no client secret is stored. Only the entra type supports federated.
+	ClientAuth *IdentityProviderClientAuth `json:"client_auth,omitempty"`
+
 	// ClientId OAuth2 client ID
 	ClientId string `json:"client_id"`
 
-	// ClientSecret OAuth2 client secret
+	// ClientSecret OAuth2 client secret. Empty when client_auth is federated.
 	ClientSecret string `json:"client_secret"`
 
 	// Issuer OIDC issuer URL

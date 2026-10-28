@@ -186,3 +186,36 @@ func TestIdentityProviderValidateRejectsBareDelimiters(t *testing.T) {
 		})
 	}
 }
+
+func TestIdentityProvider_ValidateClientAuth(t *testing.T) {
+	entra := func(auth IdentityProviderClientAuth, secret string) *IdentityProvider {
+		return &IdentityProvider{
+			Name:         "Entra",
+			Type:         IdentityProviderTypeEntra,
+			Issuer:       "https://login.microsoftonline.com/tid/v2.0",
+			ClientID:     "client-id",
+			ClientSecret: secret,
+			ClientAuth:   auth,
+		}
+	}
+	okta := entra(IdentityProviderClientAuthFederated, "")
+	okta.Type = IdentityProviderTypeOkta
+
+	tests := []struct {
+		name        string
+		idp         *IdentityProvider
+		expectedErr error
+	}{
+		{"empty client auth means secret", entra("", "secret"), nil},
+		{"explicit secret", entra(IdentityProviderClientAuthSecret, "secret"), nil},
+		{"federated entra without secret", entra(IdentityProviderClientAuthFederated, ""), nil},
+		{"federated entra with a secret", entra(IdentityProviderClientAuthFederated, "secret"), ErrIdentityProviderFederatedSecret},
+		{"federated on another type", okta, ErrIdentityProviderFederatedType},
+		{"unknown client auth", entra("certificate", ""), ErrIdentityProviderClientAuthInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expectedErr, tt.idp.Validate())
+		})
+	}
+}

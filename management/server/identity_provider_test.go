@@ -174,6 +174,31 @@ func TestDefaultAccountManager_CreateIdentityProvider_Validation(t *testing.T) {
 			expectError: true,
 			errorMsg:    "client ID is required",
 		},
+		{
+			name: "Federated Client Auth On Non-Entra Type",
+			idp: &types.IdentityProvider{
+				Name:       "Test IDP",
+				Type:       types.IdentityProviderTypeOkta,
+				Issuer:     "https://issuer.example.com",
+				ClientID:   "client-id",
+				ClientAuth: types.IdentityProviderClientAuthFederated,
+			},
+			expectError: true,
+			errorMsg:    "only supported for the entra type",
+		},
+		{
+			name: "Federated Client Auth With Secret",
+			idp: &types.IdentityProvider{
+				Name:         "Test IDP",
+				Type:         types.IdentityProviderTypeEntra,
+				Issuer:       "https://issuer.example.com",
+				ClientID:     "client-id",
+				ClientSecret: "secret",
+				ClientAuth:   types.IdentityProviderClientAuthFederated,
+			},
+			expectError: true,
+			errorMsg:    "client secret must be empty",
+		},
 	}
 
 	for _, tc := range testCases {

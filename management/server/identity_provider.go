@@ -265,6 +265,7 @@ func connectorConfigToIdentityProvider(conn *dex.ConnectorConfig, accountID stri
 		Issuer:       conn.Issuer,
 		ClientID:     conn.ClientID,
 		ClientSecret: conn.ClientSecret,
+		ClientAuth:   types.IdentityProviderClientAuth(conn.ClientAuth),
 	}
 }
 
@@ -277,6 +278,7 @@ func identityProviderToConnectorConfig(idpConfig *types.IdentityProvider) *dex.C
 		Issuer:       idpConfig.Issuer,
 		ClientID:     idpConfig.ClientID,
 		ClientSecret: idpConfig.ClientSecret,
+		ClientAuth:   dex.ClientAuth(idpConfig.ClientAuth),
 	}
 }
 

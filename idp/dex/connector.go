@@ -9,7 +9,31 @@ import (
 	"strings"
 
 	"github.com/netbirdio/dex/storage"
+
+	"github.com/netbirdio/netbird/idp/dex/oidcassertion"
 )
+
+// ClientAuth selects how a connector authenticates to the upstream provider's
+// token endpoint.
+type ClientAuth string
+
+const (
+	// ClientAuthSecret sends the stored client secret.
+	ClientAuthSecret ClientAuth = "secret"
+	// ClientAuthFederated sends a JWT signed with this server's own signing key,
+	// which the upstream provider trusts through a federated credential. No
+	// secret is stored.
+	ClientAuthFederated ClientAuth = "federated"
+)
+
+const federatedSubjectPrefix = "netbird-identity-provider:"
+
+// FederatedSubject returns the sub claim of the client assertion sent for the
+// connector with the given ID. The federated credential on the upstream
+// provider must be bound to exactly this value.
+func FederatedSubject(connectorID string) string {
+	return federatedSubjectPrefix + connectorID
+}
 
 // ConnectorConfig represents the configuration for an identity provider connector
 type ConnectorConfig struct {
@@ -27,6 +51,9 @@ type ConnectorConfig struct {
 	ClientSecret string
 	// RedirectURI is the OAuth2 redirect URI
 	RedirectURI string
+	// ClientAuth selects secret or federated client authentication. Empty
+	// means secret.
+	ClientAuth ClientAuth
 }
 
 // CreateConnector creates a new connector in Dex storage.
@@ -45,6 +72,7 @@ func (p *Provider) CreateConnector(ctx context.Context, cfg *ConnectorConfig) (*
 	if err := p.storage.CreateConnector(ctx, storageConn); err != nil {
 		return nil, fmt.Errorf("failed to create connector: %w", err)
 	}
+	p.forgetDexConnector(cfg.ID)
 
 	p.logger.Info("connector created", "id", cfg.ID, "type", cfg.Type)
 	return cfg, nil
@@ -93,21 +121,26 @@ func (p *Provider) ListConnectors(ctx context.Context) ([]*ConnectorConfig, erro
 // redirectURI) onto the stored connector config, and updates the connector name
 // when cfg.Name is set. Empty fields on cfg leave stored values unchanged, so
 // partial updates preserve create-time defaults such as scopes, claimMapping,
-// and userIDKey.
+// and userIDKey. A change of client authentication rebuilds the connector
+// config from scratch, since the two modes are different Dex connector types.
 func (p *Provider) UpdateConnector(ctx context.Context, cfg *ConnectorConfig) error {
 	if err := p.storage.UpdateConnector(ctx, cfg.ID, func(old storage.Connector) (storage.Connector, error) {
 		if cfg.Type != "" && cfg.Type != inferIdentityProviderType(old.Type, cfg.ID, nil) {
 			return storage.Connector{}, errors.New("connector type change not allowed")
 		}
 
-		configData, err := overlayConnectorConfig(old.Config, cfg)
-		if err != nil {
-			return storage.Connector{}, fmt.Errorf("failed to overlay connector config: %w", err)
-		}
-
 		name := cfg.Name
 		if name == "" {
 			name = old.Name
+		}
+
+		if cfg.ClientAuth != "" && cfg.ClientAuth != storedClientAuth(old.Type) {
+			return p.rebuildStorageConnector(old, cfg, name)
+		}
+
+		configData, err := overlayConnectorConfig(old.Config, cfg)
+		if err != nil {
+			return storage.Connector{}, fmt.Errorf("failed to overlay connector config: %w", err)
 		}
 
 		return storage.Connector{
@@ -119,9 +152,58 @@ func (p *Provider) UpdateConnector(ctx context.Context, cfg *ConnectorConfig) er
 	}); err != nil {
 		return fmt.Errorf("failed to update connector: %w", err)
 	}
+	p.forgetDexConnector(cfg.ID)
 
 	p.logger.Info("connector updated", "id", cfg.ID, "type", cfg.Type)
 	return nil
+}
+
+// rebuildStorageConnector builds a connector of the requested client
+// authentication mode, taking the issuer, client ID and redirect URI from the
+// stored config wherever cfg leaves them empty.
+func (p *Provider) rebuildStorageConnector(old storage.Connector, cfg *ConnectorConfig, name string) (storage.Connector, error) {
+	if cfg.ClientAuth == ClientAuthSecret && cfg.ClientSecret == "" {
+		return storage.Connector{}, errors.New("client secret is required to switch to secret authentication")
+	}
+
+	stored, err := p.parseStorageConnector(old)
+	if err != nil {
+		return storage.Connector{}, fmt.Errorf("failed to parse stored connector: %w", err)
+	}
+
+	merged := *cfg
+	merged.Name = name
+	merged.Type = stored.Type
+	if merged.Issuer == "" {
+		merged.Issuer = stored.Issuer
+	}
+	if merged.ClientID == "" {
+		merged.ClientID = stored.ClientID
+	}
+	if merged.RedirectURI == "" {
+		merged.RedirectURI = stored.RedirectURI
+	}
+	return p.buildStorageConnector(&merged)
+}
+
+// storedClientAuth derives the client authentication mode from the Dex
+// connector type a connector was stored as.
+func storedClientAuth(dexType string) ClientAuth {
+	if dexType == oidcassertion.Type {
+		return ClientAuthFederated
+	}
+	return ClientAuthSecret
+}
+
+// forgetDexConnector drops a connector from the running Dex server's cache so
+// the next login opens it from storage again. Dex only reopens a cached
+// connector when its resource version changes, which these writes never set,
+// so without this an updated connector keeps its old config until restart.
+func (p *Provider) forgetDexConnector(id string) {
+	if p.dexServer == nil {
+		return
+	}
+	p.dexServer.CloseConnector(id)
 }
 
 // overlayConnectorConfig writes only the user-mutable fields onto the existing
@@ -157,6 +239,7 @@ func (p *Provider) DeleteConnector(ctx context.Context, id string) error {
 	if err := p.storage.DeleteConnector(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete connector: %w", err)
 	}
+	p.forgetDexConnector(id)
 
 	p.logger.Info("connector deleted", "id", id)
 	return nil
@@ -185,8 +268,7 @@ func (p *Provider) buildStorageConnector(cfg *ConnectorConfig) (storage.Connecto
 
 	switch cfg.Type {
 	case "oidc", "zitadel", "entra", "okta", "pocketid", "authentik", "keycloak", "adfs":
-		dexType = "oidc"
-		configData, err = buildOIDCConnectorConfig(cfg, redirectURI)
+		dexType, configData, err = p.buildOIDCStorageConnector(cfg, redirectURI)
 	case "google":
 		dexType = "google"
 		configData, err = buildOAuth2ConnectorConfig(cfg, redirectURI)
@@ -199,8 +281,47 @@ func (p *Provider) buildStorageConnector(cfg *ConnectorConfig) (storage.Connecto
 	if err != nil {
 		return storage.Connector{}, err
 	}
+	if cfg.ClientAuth == ClientAuthFederated && dexType != oidcassertion.Type {
+		return storage.Connector{}, fmt.Errorf("federated client authentication is not supported for %s", cfg.Type)
+	}
 
 	return storage.Connector{ID: cfg.ID, Type: dexType, Name: cfg.Name, Config: configData}, nil
+}
+
+// buildOIDCStorageConnector picks the Dex connector type for an OIDC-based
+// provider from its client authentication mode and builds its config.
+func (p *Provider) buildOIDCStorageConnector(cfg *ConnectorConfig, redirectURI string) (string, []byte, error) {
+	switch cfg.ClientAuth {
+	case "", ClientAuthSecret:
+		data, err := buildOIDCConnectorConfig(cfg, redirectURI)
+		return "oidc", data, err
+	case ClientAuthFederated:
+		data, err := p.buildFederatedConnectorConfig(cfg, redirectURI)
+		return oidcassertion.Type, data, err
+	default:
+		return "", nil, fmt.Errorf("unsupported client authentication: %q", cfg.ClientAuth)
+	}
+}
+
+// buildFederatedConnectorConfig creates the config of an oidc-assertion
+// connector: the oidc config without a client secret plus the claims of the
+// client assertion. Only Entra is supported, since the audience is the one
+// Entra's federated identity credentials expect.
+func (p *Provider) buildFederatedConnectorConfig(cfg *ConnectorConfig, redirectURI string) ([]byte, error) {
+	if cfg.Type != "entra" {
+		return nil, fmt.Errorf("federated client authentication is not supported for %s", cfg.Type)
+	}
+	issuer := p.GetIssuer()
+	if issuer == "" {
+		return nil, errors.New("federated client authentication needs the issuer of this server")
+	}
+
+	oidcConfig := oidcConnectorConfig(cfg, redirectURI)
+	delete(oidcConfig, "clientSecret")
+	oidcConfig["assertionIssuer"] = issuer
+	oidcConfig["assertionSubject"] = FederatedSubject(cfg.ID)
+	oidcConfig["assertionAudience"] = oidcassertion.DefaultAudience
+	return encodeConnectorConfig(oidcConfig)
 }
 
 // resolveRedirectURI returns the redirect URI, using a default if not provided
@@ -217,6 +338,12 @@ func (p *Provider) resolveRedirectURI(redirectURI string) string {
 
 // buildOIDCConnectorConfig creates config for OIDC-based connectors
 func buildOIDCConnectorConfig(cfg *ConnectorConfig, redirectURI string) ([]byte, error) {
+	return encodeConnectorConfig(oidcConnectorConfig(cfg, redirectURI))
+}
+
+// oidcConnectorConfig returns the config of an oidc connector with the
+// provider-specific defaults applied.
+func oidcConnectorConfig(cfg *ConnectorConfig, redirectURI string) map[string]interface{} {
 	oidcConfig := map[string]interface{}{
 		"issuer":               cfg.Issuer,
 		"clientID":             cfg.ClientID,
@@ -243,7 +370,7 @@ func buildOIDCConnectorConfig(cfg *ConnectorConfig, redirectURI string) ([]byte,
 	case "adfs":
 		oidcConfig["scopes"] = []string{"openid", "profile", "email", "allatclaims"}
 	}
-	return encodeConnectorConfig(oidcConfig)
+	return oidcConfig
 }
 
 // buildOAuth2ConnectorConfig creates config for OAuth2 connectors (google, microsoft)
@@ -289,6 +416,7 @@ func (p *Provider) parseStorageConnector(conn storage.Connector) (*ConnectorConf
 
 	// Infer the original identity provider type from Dex connector type and ID
 	cfg.Type = inferIdentityProviderType(conn.Type, conn.ID, configMap)
+	cfg.ClientAuth = storedClientAuth(conn.Type)
 
 	return cfg, nil
 }
@@ -296,7 +424,7 @@ func (p *Provider) parseStorageConnector(conn storage.Connector) (*ConnectorConf
 // inferIdentityProviderType determines the original identity provider type
 // based on the Dex connector type, connector ID, and configuration.
 func inferIdentityProviderType(dexType, connectorID string, _ map[string]interface{}) string {
-	if dexType != "oidc" {
+	if dexType != "oidc" && dexType != oidcassertion.Type {
 		return dexType
 	}
 	return inferOIDCProviderType(connectorID)
@@ -393,6 +521,7 @@ func (p *Provider) DisableLocalAuth(ctx context.Context) error {
 	if err := p.storage.DeleteConnector(ctx, "local"); err != nil {
 		return fmt.Errorf("failed to delete local connector: %w", err)
 	}
+	p.forgetDexConnector("local")
 
 	p.logger.Info("local authentication disabled")
 	return nil

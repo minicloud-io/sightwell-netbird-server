@@ -436,3 +436,46 @@ func TestFromAPIRequest(t *testing.T) {
 	assert.Equal(t, "okta-client-id", idp.ClientID)
 	assert.Equal(t, "okta-client-secret", idp.ClientSecret)
 }
+
+func TestCreateIdentityProvider_FederatedClientAuth(t *testing.T) {
+	var received *types.IdentityProvider
+	h := initIDPTestData(nil)
+	create := h.accountManager.(*mock_server.MockAccountManager).CreateIdentityProviderFunc
+	h.accountManager.(*mock_server.MockAccountManager).CreateIdentityProviderFunc = func(ctx context.Context, accountID, userID string, idp *types.IdentityProvider) (*types.IdentityProvider, error) {
+		received = idp.Copy()
+		return create(ctx, accountID, userID, idp)
+	}
+
+	body := `{
+		"name": "Entra ID",
+		"type": "entra",
+		"issuer": "https://login.microsoftonline.com/tid/v2.0",
+		"client_id": "app-id",
+		"client_secret": "",
+		"client_auth": "federated"
+	}`
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/identity-providers", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = nbcontext.SetUserAuthInRequest(req, auth.UserAuth{UserId: testUserID, AccountId: testAccountID})
+
+	router := mux.NewRouter()
+	router.HandleFunc("/api/identity-providers", h.createIdentityProvider).Methods("POST")
+	router.ServeHTTP(recorder, req)
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	require.NotNil(t, received)
+	assert.Equal(t, types.IdentityProviderClientAuthFederated, received.ClientAuth, "client_auth must reach the account manager")
+	assert.Empty(t, received.ClientSecret)
+
+	var resp api.IdentityProvider
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+	require.NotNil(t, resp.ClientAuth)
+	assert.Equal(t, api.IdentityProviderClientAuthFederated, *resp.ClientAuth, "the response reports the client authentication mode")
+}
+
+func TestToAPIResponse_ClientAuthDefaultsToSecret(t *testing.T) {
+	resp := toAPIResponse(&types.IdentityProvider{ID: "id", Type: types.IdentityProviderTypeOIDC})
+	require.NotNil(t, resp.ClientAuth)
+	assert.Equal(t, api.IdentityProviderClientAuthSecret, *resp.ClientAuth, "providers stored before client_auth existed use a secret")
+}

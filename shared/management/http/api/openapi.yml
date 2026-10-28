@@ -2827,6 +2827,19 @@ components:
         - microsoft
         - adfs
       example: oidc
+    IdentityProviderClientAuth:
+      type: string
+      description: >-
+        How the identity provider authenticates this server at its token endpoint.
+        "secret" sends the client secret. "federated" sends a JWT signed with this
+        server's own OIDC signing key, which the provider trusts through a federated
+        identity credential bound to this server's issuer, so no client secret is
+        stored. Only the entra type supports federated.
+      enum:
+        - secret
+        - federated
+      default: secret
+      example: secret
     IdentityProvider:
       type: object
       properties:
@@ -2848,6 +2861,8 @@ components:
           description: OAuth2 client ID
           type: string
           example: 123456789.apps.googleusercontent.com
+        client_auth:
+          $ref: '#/components/schemas/IdentityProviderClientAuth'
       required:
         - type
         - name
@@ -2871,9 +2886,11 @@ components:
           type: string
           example: 123456789.apps.googleusercontent.com
         client_secret:
-          description: OAuth2 client secret
+          description: OAuth2 client secret. Empty when client_auth is federated.
           type: string
           example: secret123
+        client_auth:
+          $ref: '#/components/schemas/IdentityProviderClientAuth'
       required:
         - type
         - name

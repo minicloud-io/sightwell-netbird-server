@@ -16,6 +16,9 @@ var (
 	ErrIdentityProviderIssuerUnreachable = errors.New("identity provider issuer is unreachable")
 	ErrIdentityProviderIssuerMismatch    = errors.New("identity provider issuer does not match the issuer returned by the provider")
 	ErrIdentityProviderClientIDRequired  = errors.New("identity provider client ID is required")
+	ErrIdentityProviderClientAuthInvalid = errors.New("identity provider client authentication must be secret or federated")
+	ErrIdentityProviderFederatedType     = errors.New("federated client authentication is only supported for the entra type")
+	ErrIdentityProviderFederatedSecret   = errors.New("identity provider client secret must be empty with federated client authentication")
 )
 
 // IdentityProviderType is the type of identity provider
@@ -44,6 +47,18 @@ const (
 	IdentityProviderTypeADFS IdentityProviderType = "adfs"
 )
 
+// IdentityProviderClientAuth is how an identity provider authenticates this
+// server at its token endpoint.
+type IdentityProviderClientAuth string
+
+const (
+	// IdentityProviderClientAuthSecret sends the stored client secret.
+	IdentityProviderClientAuthSecret IdentityProviderClientAuth = "secret"
+	// IdentityProviderClientAuthFederated sends a JWT signed with this server's
+	// own signing key, trusted by the provider through a federated credential.
+	IdentityProviderClientAuthFederated IdentityProviderClientAuth = "federated"
+)
+
 // IdentityProvider represents an identity provider configuration
 type IdentityProvider struct {
 	// ID is the unique identifier of the identity provider
@@ -60,6 +75,8 @@ type IdentityProvider struct {
 	ClientID string
 	// ClientSecret is the OAuth2 client secret
 	ClientSecret string
+	// ClientAuth selects secret or federated client authentication; empty means secret
+	ClientAuth IdentityProviderClientAuth
 }
 
 // Copy returns a copy of the IdentityProvider
@@ -72,6 +89,7 @@ func (idp *IdentityProvider) Copy() *IdentityProvider {
 		Issuer:       idp.Issuer,
 		ClientID:     idp.ClientID,
 		ClientSecret: idp.ClientSecret,
+		ClientAuth:   idp.ClientAuth,
 	}
 }
 
@@ -116,7 +134,26 @@ func (idp *IdentityProvider) Validate() error {
 	if idp.ClientID == "" {
 		return ErrIdentityProviderClientIDRequired
 	}
-	return nil
+	return idp.validateClientAuth()
+}
+
+// validateClientAuth checks the client authentication mode against the
+// provider type and the presence of a secret.
+func (idp *IdentityProvider) validateClientAuth() error {
+	switch idp.ClientAuth {
+	case "", IdentityProviderClientAuthSecret:
+		return nil
+	case IdentityProviderClientAuthFederated:
+		if idp.Type != IdentityProviderTypeEntra {
+			return ErrIdentityProviderFederatedType
+		}
+		if idp.ClientSecret != "" {
+			return ErrIdentityProviderFederatedSecret
+		}
+		return nil
+	default:
+		return ErrIdentityProviderClientAuthInvalid
+	}
 }
 
 // IsValid checks if the given type is a supported identity provider type
