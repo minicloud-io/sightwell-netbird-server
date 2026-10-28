@@ -349,7 +349,7 @@ func (p *Provider) Start(_ context.Context) error {
 	// Mount Dex at /oauth2/ path for reverse proxy compatibility
 	// Don't strip the prefix - Dex's issuer includes /oauth2 so it expects the full path
 	mux := http.NewServeMux()
-	mux.Handle("/oauth2/", p.dexServer)
+	mux.Handle("/oauth2/", p.withLoginBackLink(p.dexServer))
 
 	p.httpServer = &http.Server{Handler: mux}
 	p.running = true
@@ -557,6 +557,7 @@ func (p *Provider) SetClientsMFAChain(ctx context.Context, clientIDs []string, m
 // Handler returns the Dex server as an http.Handler for embedding in another server.
 // The handler expects requests with path prefix "/oauth2/".
 func (p *Provider) Handler() http.Handler {
+	dexHandler := p.withLoginBackLink(p.dexServer)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Dex's /logout endpoint requires id_token_hint for RP-initiated logout with
 		// post_logout_redirect_uri. If the dashboard calls logout without one, avoid
@@ -566,7 +567,7 @@ func (p *Provider) Handler() http.Handler {
 			return
 		}
 
-		p.dexServer.ServeHTTP(w, r)
+		dexHandler.ServeHTTP(w, r)
 	})
 }
 

@@ -98,3 +98,14 @@ and the refresh grant send `client_id`, `client_assertion_type` and
 
 Dex rotates its signing key on a schedule and keeps publishing the previous
 key for verification, so a rotation needs no change in Entra.
+
+## Sign-in page: the "another login method" link
+
+The password page links back to the login method chooser only when the chooser
+would offer more than one method for the client that started the sign-in.
+Dex decides on that link from its in-memory connector cache, which can hold
+connectors the chooser filters out or that were deleted from storage. The
+provider's HTTP handler therefore recounts the connectors from storage, with
+the chooser's own grant type and client filters, and drops the link when there
+is only one. The templates render the link only when `.BackLink` is set, so a
+custom theme served from a directory gets the same behaviour without changes.
