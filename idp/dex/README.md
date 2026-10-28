@@ -23,9 +23,6 @@ Requirements:
 
 ### 1. Register the provider in NetBird
 
-Create the provider first. The connector ID it returns becomes part of the
-credential's subject.
-
 ```http
 POST /api/identity-providers
 Content-Type: application/json
@@ -40,8 +37,7 @@ Content-Type: application/json
 }
 ```
 
-The response carries the `id` (for example `entra-d3v8o4q6lnn4g9hqv7l0`) and
-`"client_auth": "federated"`. The `client_secret` key must be present because
+The response carries the `id` and `"client_auth": "federated"`. The `client_secret` key must be present because
 the schema still requires it, but it must be empty when `client_auth` is
 `federated`. Only the `entra` type accepts `federated`. Leaving out
 `client_auth`, or sending `secret`, keeps the client secret flow.
@@ -52,13 +48,14 @@ provider between the two modes. Switching to `secret` needs a non-empty
 
 ### 2. Add the federated credential in Entra
 
-On the app registration, open **Certificates & secrets**, then
+This step does not depend on step 1 and can run first, together with the app
+registration. On the app registration, open **Certificates & secrets**, then
 **Federated credentials**, and add one with the scenario **Other issuer**:
 
 | Field    | Value                                        |
 | -------- | -------------------------------------------- |
 | Issuer   | `https://<netbird domain>/oauth2`            |
-| Subject  | `netbird-identity-provider:<id from step 1>` |
+| Subject  | `netbird-identity-provider:<application (client) id>` |
 | Audience | `api://AzureADTokenExchange`                 |
 
 The issuer must match exactly, with no trailing slash. With Terraform, use
@@ -70,7 +67,7 @@ resource "azuread_application_federated_identity_credential" "netbird" {
   application_id = azuread_application.netbird.id
   display_name   = "netbird-embedded-idp"
   issuer         = "https://${var.netbird_domain}/oauth2"
-  subject        = "netbird-identity-provider:${var.connector_id}"
+  subject        = "netbird-identity-provider:${azuread_application.netbird.client_id}"
   audiences      = ["api://AzureADTokenExchange"]
 }
 ```
@@ -89,7 +86,7 @@ and the refresh grant send `client_id`, `client_assertion_type` and
 | Claim or header | Value                                             |
 | --------------- | ------------------------------------------------- |
 | `iss`           | the Dex issuer, `https://<netbird domain>/oauth2` |
-| `sub`           | `netbird-identity-provider:<connector id>`        |
+| `sub`           | `netbird-identity-provider:<client id>`           |
 | `aud`           | `api://AzureADTokenExchange`                      |
 | `iat`, `nbf`    | now                                               |
 | `exp`           | five minutes after `iat`                          |

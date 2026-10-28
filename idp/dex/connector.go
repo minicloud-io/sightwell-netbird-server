@@ -28,11 +28,13 @@ const (
 
 const federatedSubjectPrefix = "netbird-identity-provider:"
 
-// FederatedSubject returns the sub claim of the client assertion sent for the
-// connector with the given ID. The federated credential on the upstream
-// provider must be bound to exactly this value.
-func FederatedSubject(connectorID string) string {
-	return federatedSubjectPrefix + connectorID
+// FederatedSubject returns the sub claim of the client assertion sent with the
+// given OAuth2 client ID. The federated credential on the upstream app must be
+// bound to exactly this value. Keying it on the client ID rather than the
+// generated connector ID lets the credential be created with the app
+// registration, before NetBird knows about the provider.
+func FederatedSubject(clientID string) string {
+	return federatedSubjectPrefix + clientID
 }
 
 // ConnectorConfig represents the configuration for an identity provider connector
@@ -219,6 +221,9 @@ func overlayConnectorConfig(oldConfig []byte, cfg *ConnectorConfig) ([]byte, err
 	}
 	if cfg.ClientID != "" {
 		m["clientID"] = cfg.ClientID
+		if _, federated := m["assertionSubject"]; federated {
+			m["assertionSubject"] = FederatedSubject(cfg.ClientID)
+		}
 	}
 	if cfg.ClientSecret != "" {
 		m["clientSecret"] = cfg.ClientSecret
@@ -319,7 +324,7 @@ func (p *Provider) buildFederatedConnectorConfig(cfg *ConnectorConfig, redirectU
 	oidcConfig := oidcConnectorConfig(cfg, redirectURI)
 	delete(oidcConfig, "clientSecret")
 	oidcConfig["assertionIssuer"] = issuer
-	oidcConfig["assertionSubject"] = FederatedSubject(cfg.ID)
+	oidcConfig["assertionSubject"] = FederatedSubject(cfg.ClientID)
 	oidcConfig["assertionAudience"] = oidcassertion.DefaultAudience
 	return encodeConnectorConfig(oidcConfig)
 }

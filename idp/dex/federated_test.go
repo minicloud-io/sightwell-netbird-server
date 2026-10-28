@@ -67,7 +67,7 @@ func TestBuildStorageConnector_FederatedEntra(t *testing.T) {
 	_, hasSecret := m["clientSecret"]
 	assert.False(t, hasSecret, "no secret may be stored for a federated connector")
 	assert.Equal(t, testIssuer+"/oauth2", m["assertionIssuer"], "the assertion is issued by this server's Dex issuer")
-	assert.Equal(t, "netbird-identity-provider:entra-fed", m["assertionSubject"])
+	assert.Equal(t, "netbird-identity-provider:client-id", m["assertionSubject"], "the subject follows the app's client ID")
 	assert.Equal(t, oidcassertion.DefaultAudience, m["assertionAudience"])
 	assert.Equal(t, "oid", m["userIDKey"], "entra defaults must still apply")
 	assert.Equal(t, map[string]any{"email": "preferred_username"}, m["claimMapping"])
@@ -143,8 +143,17 @@ func TestUpdateConnector_SwitchesClientAuth(t *testing.T) {
 	assert.Equal(t, "https://login.microsoftonline.com/tid/v2.0", m["issuer"])
 	assert.Equal(t, "c", m["clientID"])
 	assert.Equal(t, "https://netbird.example/oauth2/callback", m["redirectURI"])
-	assert.Equal(t, "netbird-identity-provider:entra-1", m["assertionSubject"])
+	assert.Equal(t, "netbird-identity-provider:c", m["assertionSubject"])
 	assert.Equal(t, "Entra", raw.Name, "the name is kept when the update leaves it empty")
+
+	// A new client ID moves the subject with it, or Entra would reject the
+	// assertion for the new app.
+	require.NoError(t, p.UpdateConnector(ctx, &ConnectorConfig{ID: "entra-1", ClientID: "c2"}))
+	raw, err = p.storage.GetConnector(ctx, "entra-1")
+	require.NoError(t, err)
+	m = decodeConfig(t, raw.Config)
+	assert.Equal(t, "c2", m["clientID"])
+	assert.Equal(t, "netbird-identity-provider:c2", m["assertionSubject"])
 
 	// Federated to secret needs a secret to switch to.
 	err = p.UpdateConnector(ctx, &ConnectorConfig{ID: "entra-1", ClientAuth: ClientAuthSecret})
