@@ -1,10 +1,11 @@
 [Desktop Entry]
 Name=NetBird
 Comment=NetBird desktop client
-Exec=env WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/netbird-ui
+Exec=env WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/netbird-ui %u
 Icon=netbird
 Type=Application
 Terminal=false
 Categories=Utility;
 Keywords=netbird;
 StartupWMClass=org.wails.netbird
+MimeType=x-scheme-handler/sightwell;

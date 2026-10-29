@@ -6,6 +6,7 @@ import { ProfileProvider } from "@/contexts/ProfileContext.tsx";
 import { DialogProvider } from "@/contexts/DialogContext.tsx";
 import { RestrictionsProvider } from "@/contexts/RestrictionsContext.tsx";
 import { ReadySignal } from "@/components/ReadySignal.tsx";
+import { AddProfileLinkHandler } from "@/modules/profiles/AddProfileLinkHandler.tsx";
 
 export const AppLayout = () => {
     return (
@@ -17,6 +18,8 @@ export const AppLayout = () => {
                             <DebugBundleProvider>
                                 <ClientVersionProvider>
                                     <Outlet />
+                                    {/* Sightwell fork: before ReadySignal so it listens before queued events flush. */}
+                                    <AddProfileLinkHandler />
                                     <ReadySignal />
                                 </ClientVersionProvider>
                             </DebugBundleProvider>

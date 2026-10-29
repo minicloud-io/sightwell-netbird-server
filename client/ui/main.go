@@ -99,9 +99,16 @@ func main() {
 	// DaemonFeed's SubscribeEvents stream (see guilog.DebugLog).
 	debugLog := newDebugLog(userSetLogFile)
 
-	// Declared before app.New so the SingleInstance callback closes over it.
+	// Declared before app.New so the SingleInstance callback closes over them.
 	var tray *Tray
-	app := newApplication(func() {
+	var linkInbox *services.LinkInbox
+	app := newApplication(func(args []string) {
+		// Windows and Linux start a second process for a sightwell:// link;
+		// its arguments carry the link to this one.
+		if link, ok := services.FindLink(args); ok && linkInbox != nil {
+			linkInbox.Receive(link)
+			return
+		}
 		if tray != nil {
 			go tray.ShowWindow()
 		}
@@ -165,6 +172,9 @@ func main() {
 	// desktops, macOS, and Windows.
 	windowManager.SetRecenterOnShow(recenterOnShowPredicate())
 	app.RegisterService(application.NewService(windowManager))
+
+	linkInbox = newLinkInbox(app, windowManager)
+	app.RegisterService(application.NewService(services.NewDeepLink(linkInbox)))
 
 	// Welcome window, first launch only — Continue flips OnboardingCompleted
 	// so later launches skip it. ApplicationStarted hook so the Wails window
@@ -262,9 +272,31 @@ func parseFlagsAndInitLog() (string, bool) {
 	return *daemonAddr, userSetLogFile
 }
 
-// newApplication constructs the Wails application. onSecondInstance fires when
-// a second process launches under the same SingleInstance UniqueID.
-func newApplication(onSecondInstance func()) *application.App {
+// newLinkInbox routes sightwell:// links to the main window. macOS delivers a
+// link to the running app as an event; Windows and Linux pass it as the only
+// argument of a fresh launch, which Wails reports as the same event. Windows
+// are not created before ApplicationStarted, so a link from a cold start waits.
+func newLinkInbox(app *application.App, wm *services.WindowManager) *services.LinkInbox {
+	started := make(chan struct{})
+	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		close(started)
+	})
+	inbox := services.NewLinkInbox(func(event string) {
+		go func() {
+			<-started
+			wm.ShowMainAndEmit(event)
+		}()
+	})
+	app.Event.OnApplicationEvent(events.Common.ApplicationLaunchedWithUrl, func(e *application.ApplicationEvent) {
+		inbox.Receive(e.Context().URL())
+	})
+	return inbox
+}
+
+// newApplication constructs the Wails application. onSecondInstance fires with
+// the arguments of a second process launched under the same SingleInstance
+// UniqueID.
+func newApplication(onSecondInstance func(args []string)) *application.App {
 	// On macOS, Options.Icon feeds NSApplication's setApplicationIconImage,
 	// overriding the bundle icon (Assets.car / icons.icns) the OS already
 	// picked. Suppress it on darwin to keep the bundle's squircle.
@@ -304,8 +336,8 @@ func newApplication(onSecondInstance func()) *application.App {
 		},
 		SingleInstance: &application.SingleInstanceOptions{
 			UniqueID: hostid.UIUniqueID,
-			OnSecondInstanceLaunch: func(_ application.SecondInstanceData) {
-				onSecondInstance()
+			OnSecondInstanceLaunch: func(data application.SecondInstanceData) {
+				onSecondInstance(data.Args)
 			},
 		},
 	})

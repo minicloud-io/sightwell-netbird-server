@@ -19,6 +19,12 @@ info:
   #                               # Should match the name of your .icon file without the extension
   #                               # If not set and Assets.car exists, defaults to "appicon"
 
+# Sightwell fork: sightwell://add-profile links from a tenant's dashboard
+# (services/deeplink.go). Feeds the Info.plist, NSIS, MSIX and .desktop assets.
+protocols:
+  - scheme: sightwell
+    description: Sightwell tenant link
+
 # iOS build configuration (uncomment to customise iOS project generation)
 # Note: Keys under `ios` OVERRIDE values under `info` when set.
 # ios:

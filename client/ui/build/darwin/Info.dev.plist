@@ -27,6 +27,19 @@
             <string>true</string>
         <key>LSUIElement</key>
             <string>1</string>
+        <!-- Sightwell fork: sightwell://add-profile links from a tenant's
+             dashboard (services/deeplink.go). -->
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleURLName</key>
+                <string>ai.sightwell.connectivity</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>sightwell</string>
+                </array>
+            </dict>
+        </array>
         <key>NSHumanReadableCopyright</key>
             <string>Built on NetBird, Copyright NetBird GmbH and contributors (BSD-3-Clause)</string>
         <key>NSAppTransportSecurity</key>

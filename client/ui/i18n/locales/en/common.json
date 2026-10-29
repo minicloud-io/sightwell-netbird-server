@@ -547,6 +547,42 @@
         "message": "Confirm",
         "description": "Confirm button on the switch-profile dialog. Keep short."
     },
+    "link.addProfile.title": {
+        "message": "Add \"{name}\"?",
+        "description": "Sightwell fork. Confirmation title when a link from an organisation's dashboard offers to add it as a profile. {name} is the organisation's name from the link; keep {name} and the quotes."
+    },
+    "link.addProfile.message": {
+        "message": "Sightwell will add a profile for {host}, switch to it and open sign-in in your browser.\nAny current connection is disconnected. Only continue if you opened this link from your organisation's Sightwell page.",
+        "description": "Sightwell fork. Body of the add-profile confirmation. {host} is the server address the profile points to; keep it. Contains a line break (\\n), keep it."
+    },
+    "link.addProfile.confirm": {
+        "message": "Add and sign in",
+        "description": "Sightwell fork. Confirm button on the add-profile confirmation. Keep short."
+    },
+    "link.addProfile.errorTitle": {
+        "message": "Couldn't add the profile",
+        "description": "Sightwell fork. Error dialog title when adding a profile from a link fails."
+    },
+    "link.refused.title": {
+        "message": "Link not opened",
+        "description": "Sightwell fork. Error dialog title when a sightwell:// link is refused."
+    },
+    "link.refused.invalid": {
+        "message": "This Sightwell link is not valid. Copy the link again from your organisation's Sightwell page.",
+        "description": "Sightwell fork. Shown when a sightwell:// link is malformed."
+    },
+    "link.refused.unknown-action": {
+        "message": "This Sightwell link asks for something this version of the app doesn't support. Update Sightwell and try again.",
+        "description": "Sightwell fork. Shown when a sightwell:// link names an action the app does not know."
+    },
+    "link.refused.not-https": {
+        "message": "This Sightwell link points to a server without a secure (https) address, so it was not opened.",
+        "description": "Sightwell fork. Shown when a link's server address is not https. Keep 'https'."
+    },
+    "link.refused.missing-host": {
+        "message": "This Sightwell link doesn't say which server to use, so it was not opened.",
+        "description": "Sightwell fork. Shown when a link has no server address."
+    },
     "profile.deregister.title": {
         "message": "Deregister Profile \"{name}\"?",
         "description": "Confirmation-dialog title for deregistering a profile. {name} is the profile name; keep it and the quotes."
