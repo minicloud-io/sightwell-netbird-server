@@ -1,9 +1,14 @@
 #!/bin/sh
-# Sightwell fork: builds the macOS installer package (unsigned for now).
+# Sightwell fork: builds the macOS installer package.
 #
 #   release_files/sightwell-macos-pkg.sh VERSION [OUTPUT_DIR]
 #
-# Produces OUTPUT_DIR/Sightwell-VERSION-unsigned.pkg (default OUTPUT_DIR: dist/sightwell-macos)
+# Produces OUTPUT_DIR/Sightwell-VERSION-unsigned.pkg (default OUTPUT_DIR: dist/sightwell-macos),
+# or OUTPUT_DIR/Sightwell-VERSION.pkg when Developer ID identities are given:
+#   SIGN_APP_IDENTITY  "Developer ID Application: MINICLOUD - FZCO (US5JKY7Z7F)"
+#   SIGN_PKG_IDENTITY  "Developer ID Installer: MINICLOUD - FZCO (US5JKY7Z7F)"
+#   SIGN_KEYCHAIN      keychain holding them (optional; default: the search list)
+# Both or neither. Notarise the signed package with sightwell-macos-notarize.sh.
 # installing /Applications/Sightwell.app, which holds:
 #   Contents/MacOS/sightwell-ui   the desktop UI (CFBundleExecutable)
 #   Contents/MacOS/sightwell      the daemon and CLI, linked to /usr/local/bin/sightwell
@@ -12,7 +17,6 @@
 # Both binaries are universal (arm64 + amd64). The package receipt is
 # ai.sightwell.connectivity.pkg; NetBird's (io.netbird.client) is never touched.
 # Needs macOS with Xcode command line tools, Go, Node/pnpm and wails3 (task package).
-# Signing and notarisation are a later step (Developer ID: MINICLOUD FZCO).
 set -eu
 
 [ "$#" -ge 1 ] || { echo "usage: $0 VERSION [OUTPUT_DIR]" >&2; exit 2; }
@@ -25,6 +29,27 @@ WORK=$(mktemp -d "${TMPDIR:-/tmp}/sightwell-pkg.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
 
 LDFLAGS="-s -w -X github.com/netbirdio/netbird/version.version=$VERSION"
+
+SIGN_APP_IDENTITY=${SIGN_APP_IDENTITY:-}
+SIGN_PKG_IDENTITY=${SIGN_PKG_IDENTITY:-}
+SIGN_KEYCHAIN=${SIGN_KEYCHAIN:-}
+case "${SIGN_APP_IDENTITY:+app}${SIGN_PKG_IDENTITY:+pkg}" in
+    app | pkg)
+        echo "set both SIGN_APP_IDENTITY and SIGN_PKG_IDENTITY, or neither" >&2
+        exit 2
+        ;;
+esac
+
+# devid_codesign PATH: Developer ID signature with the hardened runtime and a
+# secure timestamp, both required for notarisation.
+devid_codesign() {
+    if [ -n "$SIGN_KEYCHAIN" ]; then
+        codesign --force --options runtime --timestamp --keychain "$SIGN_KEYCHAIN" \
+            --sign "$SIGN_APP_IDENTITY" "$1"
+    else
+        codesign --force --options runtime --timestamp --sign "$SIGN_APP_IDENTITY" "$1"
+    fi
+}
 
 echo "==> daemon (arm64 + amd64)"
 for arch in arm64 amd64; do
@@ -70,12 +95,28 @@ sh "$ROOT/release_files/collect-licenses.sh" "$WORK/licenses-daemon" ./client am
 # Merge: the daemon's third-party set into the UI's (same layout).
 cp -Rn "$WORK/licenses-daemon/." "$WORK/licenses/" 2>/dev/null || true
 cp -R "$WORK/licenses" "$APP/Contents/Resources/licenses"
+# The collected tree is private to the build user; installed, it must be
+# readable by everyone (the BSD-3-Clause notices ship with the binaries).
+chmod -R u+rwX,go+rX,go-w "$APP/Contents/Resources/licenses"
 
-# Ad-hoc signature over the final contents (replaced by Developer ID signing later).
-codesign --force --deep --sign - "$APP"
+if [ -n "$SIGN_APP_IDENTITY" ]; then
+    echo "==> Developer ID signing ($SIGN_APP_IDENTITY)"
+    # Inside out, no --deep: the daemon first, then the bundle, which signs its
+    # main executable (sightwell-ui) and seals the daemon and resources.
+    devid_codesign "$APP/Contents/MacOS/sightwell"
+    devid_codesign "$APP"
+    codesign --verify --strict --deep --verbose=2 "$APP"
+else
+    # Ad-hoc signature over the final contents: runs on the building Mac only.
+    codesign --force --deep --sign - "$APP"
+fi
 
 echo "==> package"
-PKG=$OUT/Sightwell-$VERSION-unsigned.pkg
+if [ -n "$SIGN_PKG_IDENTITY" ]; then
+    PKG=$OUT/Sightwell-$VERSION.pkg
+else
+    PKG=$OUT/Sightwell-$VERSION-unsigned.pkg
+fi
 # Not relocatable: always install to /Applications, never into a copy of
 # Sightwell.app found elsewhere on the disk.
 pkgbuild --analyze --root "$PAYLOAD" "$WORK/components.plist"
@@ -89,6 +130,14 @@ pkgbuild --root "$PAYLOAD" \
     --ownership recommended \
     "$WORK/component.pkg"
 # The scripts directory also holds uninstall.sh; pkgbuild only runs preinstall/postinstall.
-productbuild --package "$WORK/component.pkg" --identifier ai.sightwell.connectivity.pkg --version "$VERSION" "$PKG"
+if [ -z "$SIGN_PKG_IDENTITY" ]; then
+    productbuild --package "$WORK/component.pkg" --identifier ai.sightwell.connectivity.pkg --version "$VERSION" "$PKG"
+elif [ -n "$SIGN_KEYCHAIN" ]; then
+    productbuild --package "$WORK/component.pkg" --identifier ai.sightwell.connectivity.pkg --version "$VERSION" \
+        --sign "$SIGN_PKG_IDENTITY" --timestamp --keychain "$SIGN_KEYCHAIN" "$PKG"
+else
+    productbuild --package "$WORK/component.pkg" --identifier ai.sightwell.connectivity.pkg --version "$VERSION" \
+        --sign "$SIGN_PKG_IDENTITY" --timestamp "$PKG"
+fi
 shasum -a 256 "$PKG" | tee "$PKG.sha256"
 echo "Built $PKG"

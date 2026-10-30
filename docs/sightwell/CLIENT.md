@@ -4,8 +4,8 @@ Branch `feat/client-branding` (on `feat/idp-theme`, upstream `v0.81.4`)
 rebrands the NetBird desktop UI, `client/ui` (Wails v3, Go + React), as
 **Sightwell**. Phase 1 is the visual rebrand and a local, unsigned macOS
 build. Signing, notarisation, the installer and the daemon are phase 2;
-the own daemon identity and the unsigned installer are on
-`feat/client-side-by-side` (see `SIDE-BY-SIDE.md`).
+the own daemon identity, the installer and its Developer ID signing and
+notarisation are on `feat/client-side-by-side` (see `SIDE-BY-SIDE.md`).
 
 ## Decisions taken (reversible)
 

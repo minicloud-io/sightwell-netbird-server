@@ -47,7 +47,7 @@ upgrade NetBird's formula). Its signing-key base is
 and `reposign/certs` still embeds NetBird's root, so every update fails
 verification until MINICLOUD FZCO's keys exist: updates fail closed.
 
-## Installer (macOS, unsigned)
+## Installer (macOS)
 
 ```bash
 release_files/sightwell-macos-pkg.sh 0.81.4-sightwell.7-dev
@@ -56,12 +56,47 @@ release_files/sightwell-macos-pkg.sh 0.81.4-sightwell.7-dev
 Builds `dist/sightwell-macos/Sightwell-<version>-unsigned.pkg`:
 `/Applications/Sightwell.app` with `sightwell-ui` (UI) and `sightwell`
 (daemon, CLI), both universal, `Resources/licenses/` (NetBird's BSD-3-Clause
-licence, Go's terms, third-party licences) and `Resources/uninstall.sh`.
+licence, Go's terms, third-party licences, readable by every user) and
+`Resources/uninstall.sh`.
 Not relocatable. Scripts: `release_files/sightwell_darwin_pkg/`; they only
 quit Sightwell's UI (by bundle id and process name) and stop Sightwell's
 service, and drop upstream's refusal to install next to a Homebrew NetBird.
-The workflow `.github/workflows/sightwell-client-macos.yml` (manual,
-SHA-pinned) builds the same package as an artifact; nothing is published.
+The workflow `.github/workflows/sightwell-client-macos.yml` (client branch
+pushes, SHA-pinned) builds the same package as an artifact; nothing is published.
+
+### Signed and notarised (Developer ID, MINICLOUD FZCO)
+
+With `SIGN_APP_IDENTITY` and `SIGN_PKG_IDENTITY` set (and optionally
+`SIGN_KEYCHAIN`), the same script signs the daemon and then the app with
+the Developer ID Application identity (hardened runtime, secure timestamp,
+no `--deep`), signs the package with the Developer ID Installer identity and
+names it `Sightwell-<version>.pkg`, the name the updater downloads.
+`release_files/sightwell-macos-notarize.sh PKG` then submits it with an App
+Store Connect API key (`ASC_KEY_PATH`, `ASC_KEY_ID`, `ASC_ISSUER_ID`),
+staples the ticket, checks it with `spctl`/`codesign` and rewrites the
+`.sha256`.
+
+`.github/workflows/sightwell-client-macos-signed.yml` does both on
+`v*-sightwell.*` tags or a manual run (once on the default branch). It
+runs in the `macos-signing` environment, so each run waits for its
+reviewer; the identities go into a throwaway keychain that is deleted at
+the end. Secrets: `MACOS_SIGNING_P12` (base64 of one .p12 with both
+identities), `MACOS_SIGNING_P12_PASSWORD`, `ASC_API_KEY_P8`, `ASC_API_KEY_ID`,
+`ASC_API_ISSUER_ID`. Nothing is published.
+
+Set up once (Account Holder of team US5JKY7Z7F): create the Developer ID
+Application and Developer ID Installer certificates, export both as one
+.p12; create an App Store Connect team API key with the Developer role;
+create the `macos-signing` environment on minicloud-io/sightwell-netbird-server
+with a required reviewer and the secrets above.
+
+Verified locally with a throwaway self-signed identity: the app signature is
+valid on disk and satisfies its designated requirement, and the daemon runs
+under the hardened runtime. Not verified yet: package signing (`productbuild`
+accepts only an installer identity chained to Apple), notarisation, and the
+UI under the hardened runtime; the first real signed run covers all three.
+No entitlements are set: the daemon uses utun as root (no Network
+Extension), and WebKit's JIT runs in its own processes.
 
 Remove with `sudo /Applications/Sightwell.app/Contents/Resources/uninstall.sh`
 (Sightwell's service, command, app, dirs and receipt only).
